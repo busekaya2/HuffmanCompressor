@@ -23,7 +23,7 @@ vector_t *init_vector()
 int increase_memory(vector_t *v)
 {
 	v->memory *= 2;
-	v = realloc(v, sizeof(node_t) * v->memory);
+	v->nodes = realloc(v->nodes, sizeof(node_t) * v->memory);
 	
 	if (v == NULL)
 		return 1;
@@ -34,7 +34,7 @@ int increase_memory(vector_t *v)
 
 int add_element(vector_t *v, node_t *node)
 {
-	if (v->n >= v->memory)
+	if (v->n + 1 > v->memory)
 		if (increase_memory(v) == 1)
 			return 1;
 
