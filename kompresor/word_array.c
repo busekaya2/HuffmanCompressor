@@ -41,6 +41,12 @@ int add_word(word_array_t *arr, char* word)
 	arr->words[arr->n++] = word;
 	
 	return 0;
-}			
+}	
+
+void free_word_array(word_array_t *arr)
+{
+	free(arr->words);
+	free(arr);
+}
 
 

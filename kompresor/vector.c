@@ -45,16 +45,6 @@ int add_element(vector_t *v, node_t *node)
 
 void free_vector(vector_t *v)
 {
-	int i;
-
-	for(i = 0; i < v->n; i++)
-	{
-		if ((v->nodes[i])->code[0] != '\0')
-		{
-			free((v->nodes[i])->code);
-		}
-		free(v->nodes[i]);
-	}
 	free(v->nodes);
 	free(v);
 }

@@ -1,4 +1,7 @@
-#include <stdio.h>
-#include "node.h"
+#include "vector.h"
 
-void encode(FILE*, char*, char*, int, node_t*);
+
+char *find_code(char, vector_t*);
+
+void encode(FILE*, FILE*, FILE*, char*, vector_t*, char*);
+

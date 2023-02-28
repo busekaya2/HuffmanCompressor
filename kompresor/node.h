@@ -9,6 +9,6 @@ typedef struct node{
 	char* code;
 } node_t;
 
-node_t* init_node(int, int, node_t*, node_t*, char*);
+node_t* init_node(int, int, node_t*, node_t*);
 
 #endif

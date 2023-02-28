@@ -20,14 +20,14 @@ node_t *make_tree(int *values, vector_t *nodes, int n)
 		if (values[i] == 0)
 			continue;
 		
-		add_element(nodes, init_node(i, values[i], NULL, NULL, "\0"));
+		add_element(nodes, init_node(i, values[i], NULL, NULL));
 	}
 	
 	qsort(nodes->nodes, nodes->n, sizeof(node_t*), node_cmp);
 
 	while (nodes->n > 1)
 	{
-		nodes->nodes[0] = init_node(0, nodes->nodes[0]->frequency + nodes->nodes[1]->frequency, nodes->nodes[0], nodes->nodes[1], "\0");
+		nodes->nodes[0] = init_node(0, nodes->nodes[0]->frequency + nodes->nodes[1]->frequency, nodes->nodes[0], nodes->nodes[1]);
 
 		for (i = 1; i < nodes->n - 1; i++)
             		nodes->nodes[i] = nodes->nodes[i + 1];
@@ -60,7 +60,8 @@ void read_codes(node_t *head, char* str, int level, vector_t* codes)
 		}
 		tmp[i] = '\0';
 
-		add_element(codes, init_node(head->value, head->frequency, NULL, NULL, tmp));
+		head->code = tmp;
+		add_element(codes, head);
 		
 		return;
 	}
@@ -83,7 +84,8 @@ void read_codes(node_t *head, char* str, int level, vector_t* codes)
 
 void free_tree(node_t *head)
 {
-	
+	if (head->code != NULL)
+		free(head->code);
 	if (head->left_child != NULL)
 		free_tree(head->left_child);
 	if (head->right_child != NULL)

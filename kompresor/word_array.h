@@ -12,3 +12,4 @@ int increase_capacity(word_array_t *arr);
 
 int add_word(word_array_t *arr, char* word);
 
+void free_word_array(word_array_t *arr);
