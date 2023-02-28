@@ -31,7 +31,6 @@ void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, vector_t *c
 		else
 			code = end_code;
 
-		//code = find_code(c, codes);
 		for (i = 0; i < strlen(code); i++)
 		{
 			if (shift > 7)
@@ -55,7 +54,10 @@ void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, vector_t *c
 	}
 	fwrite(&byte, 1, sizeof(byte), out_file);
 
-	fprintf(out_key, "%s\n", file_ext);
+	if (file_ext != NULL)
+		fprintf(out_key, "%s\n", file_ext);
+	else
+		fprintf(out_key, "\n");
 	fprintf(out_key, "%s\n", end_code);
 	for (i = 0; i < codes->n; i++)
 		fprintf(out_key, "%d %s\n", codes->nodes[i]->value, codes->nodes[i]->code);

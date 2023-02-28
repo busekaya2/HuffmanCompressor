@@ -145,6 +145,12 @@ int main(int argc, char** argv)
 		out_file = fopen(out_file_path, "wb");
 		out_key = fopen(out_key_path, "wb");
 
+		if (in == NULL || out_file == NULL || out_key == NULL)
+		{
+			printf("brak uprawnien do tworzenia plikow\n");
+			return 3;
+		}
+
 		encode(in, out_file, out_key, file_ext, codes, end_code);
 
 		fclose(in);
