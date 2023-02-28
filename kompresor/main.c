@@ -11,15 +11,18 @@
 
 int main(int argc, char** argv)
 {
+	char *input_path;
+	char *file_ext;
 	char *file_name;
-	char file_extension[50];
+	int file_ext_n;
 	int byte, n, i, j, file_n;
-	int file_name_n;
-	int ext_n;
+	int input_path_n;
 	int v[256];
 	FILE *in;
 	FILE *out_file;
 	FILE *out_key;
+	char *out_file_path;
+	char *out_key_path;
 	node_t *root;
 	node_t *temp_node;
 	char* end_code;
@@ -29,7 +32,7 @@ int main(int argc, char** argv)
 	
 	word_array_t *files = init_word_array(2);
 	char opt;
-	char *output_directory;
+	char *out_dir = NULL;
 	int show_size = 0;
 	int show_codes = 0;
 
@@ -38,7 +41,7 @@ int main(int argc, char** argv)
     		switch (opt)
 	      	{
       			case 'o':
-        			output_directory = optarg;
+        			out_dir = optarg;
 	        		break;
 	      		case 'f':
         			add_word(files, optarg);
@@ -51,14 +54,13 @@ int main(int argc, char** argv)
 	for (file_n = 0; file_n < files->n; file_n++)
 	{
 		// Ustawianie domyślnych wartości zmiennych dla kolejnego pliku
-		file_name = files->words[file_n];
-		file_name_n = 0;
-		ext_n = 0;
+		input_path = files->words[file_n];
+		input_path_n = 0;
 		for (i = 0; i < 256; i++)
 			v[i] = 0;
 		nodes = init_vector();
 		
-		in = fopen(file_name, "rb");
+		in = fopen(input_path, "rb");
 	
 		if (in == NULL)
 			return -1;
@@ -73,19 +75,52 @@ int main(int argc, char** argv)
 		fclose(in);
 
 		// Odczytywanie rozszerzenia pliku
-		file_name_n = strlen(file_name);
-		for (i = file_name_n - 1; i > 0; i--)
+		file_ext = strrchr(input_path, '.');
+		if (file_ext == NULL)
+			file_ext_n = -1;	
+		else
 		{
-			if (file_name[i] == '.')
-			{
-				for (j = i + 1; j < file_name_n; j++)
-					file_extension[ext_n++] = file_name[j];
-				file_extension[ext_n] = '\0';
-				break;
-			}
+			file_ext_n = strlen(file_ext) - 1;
+			file_ext++;
 		}
-		printf("%s\n", file_extension);
-	
+		
+		// Odczytywanie sciezki pliku bez rozszerzenia
+		if (out_dir == NULL) // Gdy użytkownik podał ścieżkę 
+		{
+			j = strlen(input_path) - file_ext_n - 1;
+			file_name = malloc(sizeof(char) * j);
+			for (i = 0; i < j; i++)
+				file_name[i] = input_path[i];
+			file_name[j] = '\0';
+		}
+		else // Gdy nie podał (działa *jakoś*)
+		{
+			j = strlen(out_dir) + strlen(input_path) - file_ext_n;
+			file_name = malloc(sizeof(char) * j);
+			strcpy(file_name, out_dir);
+			if (file_name[strlen(out_dir) - 1] != '/')
+			{
+				file_name[strlen(out_dir)] = '/';
+				for (i = strlen(out_dir) + 1; i < j; i++)
+					file_name[i] = input_path[i - strlen(out_dir) - 1];
+			}
+			else
+			{
+				for (i = strlen(out_dir); i < j - 1; i++)
+					file_name[i] = input_path[i - strlen(out_dir)];
+			}
+			file_name[j] = '\0';
+		}
+
+		// Tworzenie nazw plikow wyjsciowych
+		out_file_path = malloc(strlen(file_name + 5));
+		strcpy(out_file_path, file_name);
+		strcat(out_file_path, ".huf");	
+		
+		out_key_path = malloc(strlen(file_name + 5));		
+		strcpy(out_key_path, file_name);		
+		strcat(out_key_path, ".key");	
+
 		// Tworzenie drzewa binarnego Huffmana
 		root = make_tree(v, nodes, 256);
 	
@@ -100,26 +135,26 @@ int main(int argc, char** argv)
 		}
 		
 		// Tworzenie specjalnego kodu konczacego plik wynikowy
-		printf("codes[0]: %s\n", codes->nodes[0]->code);
 		end_code = malloc(sizeof(char) * (strlen(codes->nodes[0]->code) + 2));
 		strcpy(end_code, codes->nodes[0]->code);
 		end_code[strlen(codes->nodes[0]->code)] = '0';
 		end_code[strlen(codes->nodes[0]->code) + 1] = '\0';
 
-		printf("end: %s\n", end_code);
-
 		// Kodowanie do pliku
-		in = fopen(file_name, "rb");
-		out_file = fopen("out.huf", "wb");
-		out_key = fopen("out.key", "wb");
+		in = fopen(input_path, "rb");
+		out_file = fopen(out_file_path, "wb");
+		out_key = fopen(out_key_path, "wb");
 
-		encode(in, out_file, out_key, file_extension, codes, end_code);
+		encode(in, out_file, out_key, file_ext, codes, end_code);
 
 		fclose(in);
 		fclose(out_file);
 		fclose(out_key);
 
 		// Zwalnianie pamięci
+		free(file_name);
+		free(out_file_path);
+		free(out_key_path);
 		free(end_code);
 		free_word_array(files);
 		free_tree(root);
