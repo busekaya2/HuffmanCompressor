@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 		if (in == NULL)
 			return -1;
 	
-		// Wyznaczanie częstości bytów pliku
+		// Wyznaczanie częstości byte'ów pliku
 		while ((byte = fgetc(in)) != EOF)
 		{
 			v[byte]++;
@@ -203,12 +203,12 @@ int main(int argc, char** argv)
 		free(out_file_path);
 		free(out_key_path);
 		free(end_code);
-		free_word_array(files);
 		free_tree(root);
 		free_vector(codes);
 		free(nodes->nodes);
 		free(nodes);
 	}
+	free_word_array(files);
 
 	return 0;
 }
