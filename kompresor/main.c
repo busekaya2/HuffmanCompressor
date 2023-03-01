@@ -7,7 +7,25 @@
 #include "vector.h"
 #include "encode.h"
 #include "word_array.h"
+#include "decode.h"
 
+
+long int get_file_size(char* filename)
+{
+	FILE* f = fopen(filename, "rb");
+
+	if (f == NULL)
+	{
+		printf("Brak uprawnień do otwarcia pliku.\n");
+		return -1;
+    	}
+
+	fseek(f, 0L, SEEK_END);
+	long int file_size = ftell(f);
+	fclose(f);
+
+	return file_size / 1024;
+}
 
 int main(int argc, char** argv)
 {
@@ -33,10 +51,10 @@ int main(int argc, char** argv)
 	word_array_t *files = init_word_array(2);
 	char opt;
 	char *out_dir = NULL;
-	int show_size = 0;
-	int show_codes = 0;
+	int print_size = 0;
+	int print_codes = 0;
 
-	while ((opt = getopt(argc, argv, "o:f:")) != -1)
+	while ((opt = getopt(argc, argv, "sco:f:")) != -1)
 	{
     		switch (opt)
 	      	{
@@ -46,6 +64,12 @@ int main(int argc, char** argv)
 	      		case 'f':
         			add_word(files, optarg);
         			break;
+  	    		case 'c':
+				print_codes = 1;
+				break;
+  	    		case 's':
+				print_size = 1;
+				break;
   	    		case '?':
 				break;
 		}
@@ -84,8 +108,8 @@ int main(int argc, char** argv)
 			file_ext++;
 		}
 		
-		// Odczytywanie sciezki pliku bez rozszerzenia
-		if (out_dir == NULL) // Gdy użytkownik podał ścieżkę 
+		// Odczytywanie końcowej sciezki pliku bez rozszerzenia
+		if (out_dir == NULL) // Gdy użytkownik podał ścieżkę wyjściową
 		{
 			j = strlen(input_path) - file_ext_n - 1;
 			file_name = malloc(sizeof(char) * j);
@@ -112,7 +136,7 @@ int main(int argc, char** argv)
 			file_name[j] = '\0';
 		}
 
-		// Tworzenie nazw plikow wyjsciowych
+		// Tworzenie ścieżek plików wyjściowych (dodawanie .huf i .key)
 		out_file_path = malloc(strlen(file_name + 5));
 		strcpy(out_file_path, file_name);
 		strcat(out_file_path, ".huf");	
@@ -129,11 +153,14 @@ int main(int argc, char** argv)
 		codes = init_vector();
 		read_codes(root, temp_str, 0, codes);
 
-		for (int i = 0; i < codes->n; i++)
+		// Pokazuje kody znaków jeśli użytkownik wybrał opcję
+		if (print_codes)
 		{
-			printf("%d %s\n", codes->nodes[i]->value, codes->nodes[i]->code);
+			printf("Wygenerowane kody dla %s:\n<sign>\t<code>\n", input_path);
+			for (int i = 0; i < codes->n; i++)
+				printf("%d\t%s\n", codes->nodes[i]->value, codes->nodes[i]->code);
 		}
-		
+
 		// Tworzenie specjalnego kodu konczacego plik wynikowy
 		end_code = malloc(sizeof(char) * (strlen(codes->nodes[0]->code) + 2));
 		strcpy(end_code, codes->nodes[0]->code);
@@ -147,15 +174,29 @@ int main(int argc, char** argv)
 
 		if (in == NULL || out_file == NULL || out_key == NULL)
 		{
-			printf("brak uprawnien do tworzenia plikow\n");
+			printf("Brak uprawnien do tworzenia plikow\n");
 			return 3;
 		}
 
 		encode(in, out_file, out_key, file_ext, codes, end_code);
 
+		// Wyświetlanie rozmiaru pliku przed i po komresji
+		if (print_size)
+		{
+			printf("Rozmiar %s przed kompresją: %ld [KB]\n", input_path, get_file_size(input_path));
+			printf("Rozmiar %s po kompresji: %ld [KB]\n", input_path, get_file_size(out_file_path) + get_file_size(out_key_path));
+		}
+
 		fclose(in);
 		fclose(out_file);
 		fclose(out_key);
+
+		// Testowanie poprawności kompresji
+		FILE *decoded = fopen("decoded.txt", "wb");
+		FILE *to_decode = fopen(out_file_path, "rb");
+		decode(to_decode, decoded, codes, end_code);
+		fclose(decoded);
+		fclose(to_decode);
 
 		// Zwalnianie pamięci
 		free(file_name);
