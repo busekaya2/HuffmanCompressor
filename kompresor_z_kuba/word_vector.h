@@ -9,7 +9,7 @@ typedef struct Word_vec
 } word_vec_t;
 
 word_vec_t * init_word_vec(int);
-int double_capacity(word_vec_t*);
+int double_word_capacity(word_vec_t*);
 int add_word(word_vec_t*, char*);
 void free_word_vec(word_vec_t*);
 
