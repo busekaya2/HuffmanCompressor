@@ -7,7 +7,6 @@
 #include "vector.h"
 #include "encode.h"
 #include "word_array.h"
-#include "decode.h"
 
 
 long int get_file_size(char* filename)
@@ -190,13 +189,6 @@ int main(int argc, char** argv)
 		fclose(in);
 		fclose(out_file);
 		fclose(out_key);
-
-		// Testowanie poprawności kompresji
-		FILE *decoded = fopen("decoded.txt", "wb");
-		FILE *to_decode = fopen(out_file_path, "rb");
-		decode(to_decode, decoded, codes, end_code);
-		fclose(decoded);
-		fclose(to_decode);
 
 		// Zwalnianie pamięci
 		free(file_name);

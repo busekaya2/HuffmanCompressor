@@ -49,7 +49,7 @@ void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, vector_t *c
 	}
 	while (shift < 8)
 	{
-		byte |= (0 << (7 - shift));
+		byte |= (1 << (7 - shift));
 		shift++;
 	}
 	fwrite(&byte, 1, sizeof(byte), out_file);
