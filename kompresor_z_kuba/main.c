@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "word_vector.h"
 #include "node_vector.h"
 #include "huffman.h"
+#include "encode.h"
 
 #define BYTE_SIZE 256
 
@@ -25,6 +27,10 @@ int main(int argc, char **argv)
 
 	// Kodowanie do pliku
 	node_vec_t *codes;
+	char temp_code[BYTE_SIZE];
+	char *file_ext;
+	FILE *out_file;
+	FILE *out_key;
 
 	while ((opt = getopt(argc, argv, "sco:f:")) != -1)
 	{
@@ -73,11 +79,32 @@ int main(int argc, char **argv)
 	
 		// Czytanie kodów z drzewa
 		codes = init_node_vec(8);
-		
+		temp_code[0] = '\0';
+		read_codes(root, codes, temp_code);
+
+		for(i = 0; i < codes->n; i++)
+			printf("%d: %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);	
+
+		// Odczytywanie rozszerzenia pliku
+		file_ext = strrchr(files->words[j], '.');
+		file_ext++;
+		//printf("%s\n", file_ext);
+
+		in = fopen(files->words[j], "rb");
+		out_file = fopen("test.huf", "wb");
+		out_key = fopen("test.key", "w");
+		encode(in, out_file, out_key, file_ext, codes);
+		fclose(in);
+		fclose(out_file);
+		fclose(out_key);
 
 		// Zwalnianie pamięci dla następnego pliku
 		free_node_vec(nodes);
+
+		for(i = 0; i < codes->n; i++)
+			free_node(codes->nodes[i]);
 		free_node_vec(codes);
+		free_tree(root);
 	}	
 	
 	free_word_vec(files);

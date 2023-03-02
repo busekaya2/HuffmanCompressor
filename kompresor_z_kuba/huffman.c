@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "node_vector.h"
 #include "node.h"
 
@@ -34,7 +35,44 @@ node_t * make_tree(node_vec_t *nodes)
 	return nodes->nodes[0];
 }
 
-void read_codes(node_t *head, node_vec_t *codes)
+void read_codes(node_t *head, node_vec_t *codes, char *temp_code)
 {
-	
+	char *tmp;
+
+	if(head->left != NULL)
+	{
+		strcat(temp_code, "0\0");
+		read_codes(head->left, codes, temp_code);
+	}
+	if(head->right != NULL)
+	{
+		strcat(temp_code, "1\0");
+		read_codes(head->right, codes, temp_code);
+	}
+	if(head->right == NULL && head->right == NULL)
+	{
+		tmp = malloc(sizeof(char) * (strlen(temp_code) + 1));
+		strcpy(tmp, temp_code);
+		add_node(codes, init_node(head->sign, 0, NULL, NULL));
+		codes->nodes[codes->n - 1]->code = tmp;
+		
+		if(strlen(temp_code) > 0)
+		{
+			temp_code[strlen(temp_code) - 1] = '\0';
+		}
+	}	
+}
+
+void free_tree(node_t *root)
+{	
+	if(root->left != NULL)
+	{
+		free_tree(root->left);		
+	}
+	if(root->right != NULL)
+	{
+		free_tree(root->right);
+	}
+
+	free_node(root);
 }
