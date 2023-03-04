@@ -1,2 +1,6 @@
-main.exe: main.c huffman_tree.c vector.c node.c encode.c word_array.c decode.c
-	cc main.c huffman_tree.c vector.c node.c encode.c word_array.c decode.c -o main.exe
+compressor.exe: main.c node.c node_vector.c word_vector.c huffman.c encode.c decode.c
+	cc main.c node.c node_vector.c word_vector.c huffman.c encode.c decode.c -o compressor.exe
+
+
+debug: main.c node.c node_vector.c word_vector.c huffman.c encode.c decode.c
+	cc -ggdb main.c node.c node_vector.c word_vector.c huffman.c encode.c decode.c -o compressor.exe

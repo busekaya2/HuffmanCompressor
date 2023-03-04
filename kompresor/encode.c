@@ -1,52 +1,69 @@
 #include <stdio.h>
 #include <string.h>
-#include "vector.h"
+#include "node_vector.h"
 
 
-char *find_code(char sign, vector_t *codes)
+/* Szuka kodów w wektorze i zwraca ten pasujący do danego znaku */
+char *find_code(int sign, node_vec_t *codes)
 {
 	int i;
 
 	for (i = 0; i < codes->n; i++)
-	{
-		if (sign == (codes->nodes[i])->value)
-			return (codes->nodes[i])->code;
-	}
-
+		if(codes->nodes[i]->sign == sign)
+			return codes->nodes[i]->code;
 	return NULL;
 }
 
 
-void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, vector_t *codes, char *end_code)
+/* Funkcja kodująca znaki do pliku oraz tworząca plik klucz
+ * Czytamy kolejne bajty pliku, znajdujemy odpowiednie kody a następnie ładujemy je do pliku wyjściowego.
+ * Na sam koniec ładujemy znak końca pliku (-1) i uzupełniamy zerami do pełnego bajta jeśli trzeba. */
+void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, node_vec_t *codes)
 {
-	char byte = 0;
-	int c, i;
-	int shift = 0;
-	char* code;
+	char byte = 0;			// Wartość bajta który będzie zapisywany do pliku wyjściowego.
+	int shift = 0;			// Przesunięcie bitowe zmiennej byte.
+	char* code;			// Wskaźnik na kod znaku
+	int i, c;			// Zmienne do iterowania
 
-	while (c = getc(in))
+	// Ładowanie kodów znaków do pliku
+	while ((c = getc(in)) != EOF)
 	{
-		if (c != EOF)
-			code = find_code(c, codes);
-		else
-			code = end_code;
+		// Szukamy kodu znaku
+		code = find_code(c, codes);
 
+		// Zapisujemy bit po bicie do pliku wyjściowego
 		for (i = 0; i < strlen(code); i++)
 		{
 			if (shift > 7)
 			{
+				/* Jeśli przesunięto już o 8 bitów to zapisujemy do pliku.
+				 * Zerujemy bajt */
 				fwrite(&byte, 1, sizeof(byte), out_file);
 				byte = 0;
 				shift = 0;
 			}
 
+			// Zapisywanie bity do bajta
 			byte |= ((code[i] - '0') << (7 - shift));
 			shift++;
 		}
-
-		if (c == EOF)
-			break;
 	}
+
+	//  Ładowanie znaku końca (-1) do pliku
+	code = find_code(-1, codes);		
+	for (i = 0; i < strlen(code); i++)
+	{
+		if (shift > 7)
+		{
+			fwrite(&byte, 1, sizeof(byte), out_file);
+			byte = 0;
+			shift = 0;
+		}
+		byte |= ((code[i] - '0') << (7 - shift));
+		shift++;
+	}
+		
+	// Uzupełnianie zerami jeśli nie wypełniono całego bajta
 	while (shift < 8)
 	{
 		byte |= (0 << (7 - shift));
@@ -54,11 +71,14 @@ void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, vector_t *c
 	}
 	fwrite(&byte, 1, sizeof(byte), out_file);
 
+	/* Zapisywanie rozszerzenia oryginalnego pliku do pliku klucza jako pierwsza linia.
+	 * Pierwsza linia pusta jeśli brak rozszerzenia*/
 	if (file_ext != NULL)
 		fprintf(out_key, "%s\n", file_ext);
 	else
 		fprintf(out_key, "\n");
-	fprintf(out_key, "%s\n", end_code);
+	
+	// Zapisywanie znaków i kodów do pliku klucza.
 	for (i = 0; i < codes->n; i++)
-		fprintf(out_key, "%d %s\n", codes->nodes[i]->value, codes->nodes[i]->code);
+		fprintf(out_key, "%d %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);
 }
