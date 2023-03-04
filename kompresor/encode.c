@@ -24,12 +24,12 @@ void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, node_vec_t 
 	int shift = 0;
 	char* code;
 
-	while (c = getc(in))
+	while ((c = getc(in)) != EOF)
 	{
 		if(c != EOF)
 			code = find_code(c, codes);
 		else
-			code = find_code(26, codes);
+			code = find_code(-1, codes);
 		//printf("%d: %s\n", c, code);
 
 		for (i = 0; i < strlen(code); i++)

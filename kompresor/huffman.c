@@ -30,6 +30,10 @@ node_t * make_tree(node_vec_t *nodes)
 			nodes->nodes[i] = nodes->nodes[i + 1];
 			nodes->nodes[i + 1] = temp;
 		}
+
+		for (i = 0; i < nodes->n - 1; i++)
+			if ( nodes->nodes[i]->freq > nodes->nodes[i + 1]->freq )
+				printf("Zle posortowane !!! \n");
 	}
 
 	return nodes->nodes[0];
@@ -49,18 +53,18 @@ void read_codes(node_t *head, node_vec_t *codes, char *temp_code)
 		strcat(temp_code, "1\0");
 		read_codes(head->right, codes, temp_code);
 	}
-	if(head->right == NULL && head->right == NULL)
+	if(head->left == NULL && head->right == NULL)
 	{
 		tmp = malloc(sizeof(char) * (strlen(temp_code) + 1));
 		strcpy(tmp, temp_code);
-		add_node(codes, init_node(head->sign, 0, NULL, NULL));
+		add_node(codes, init_node(head->sign, head->freq, NULL, NULL));
 		codes->nodes[codes->n - 1]->code = tmp;
-		
-		if(strlen(temp_code) > 0)
-		{
-			temp_code[strlen(temp_code) - 1] = '\0';
-		}
 	}	
+
+	if(strlen(temp_code) > 0)
+	{
+		temp_code[strlen(temp_code) - 1] = '\0';
+	}
 }
 
 void free_tree(node_t *root)

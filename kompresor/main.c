@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include "word_vector.h"
 #include "node_vector.h"
 #include "huffman.h"
@@ -24,6 +25,9 @@ int main(int argc, char **argv)
 	// Tworzenie drzewa
 	node_vec_t *nodes;
 	node_t *root;
+
+	// Generowanie znaku końca
+	int min;
 
 	// Kodowanie do pliku
 	node_vec_t *codes;
@@ -50,11 +54,11 @@ int main(int argc, char **argv)
 		in = fopen(files->words[j], "rb");
 		if(in == NULL)
 		{
-			fprintf(stderr, "%s: błąd odczytu pliku %s", argv[0], files->words[j]);
+			fprintf(stderr, "%s: błąd odczytu pliku %s\n", argv[0], files->words[j]);
 			return 1;
 		}
 		
-		// Zerowanie głównych zmiennych dla kolejnego pliku
+		// Zerowanie częstości byte'ów dla kolejnego pliku
 		for(i = 0; i < BYTE_SIZE; i++)
 			freq[i] = 0;
 		
@@ -62,9 +66,6 @@ int main(int argc, char **argv)
 		while((byte = fgetc(in)) != EOF)
 			freq[byte]++;
 		
-		// Dodanie znaku końca pliku
-		freq[26]++;
-
 		fclose(in);
 
 		// Tworzenie struktur węzłów
@@ -82,6 +83,35 @@ int main(int argc, char **argv)
 		temp_code[0] = '\0';
 		read_codes(root, codes, temp_code);
 
+		// Generowanie znaku końca (przesunięcie wybranego znaku o poziom w głąb drzewa i dodanie obok znaku końca)
+		 	// Szukanie najdluzszego kodu
+		min = 0;
+		for (i = 1; i < codes->n; i++)
+			if (codes->nodes[i]->freq < codes->nodes[min]->freq)
+				min = i;
+			
+			// Tworzenie dwóch nowych liści
+		add_node(codes, init_node(codes->nodes[min]->sign, codes->nodes[min]->freq, NULL, NULL));
+		add_node(codes, init_node(-1, 0, NULL, NULL));
+
+			// Łączenie liści z drzewem
+		codes->nodes[min]->left = codes->nodes[codes->n - 1];
+		codes->nodes[min]->right = codes->nodes[codes->n - 2];
+			
+			// Generowanie kodow
+		codes->nodes[codes->n - 1]->code = malloc(sizeof(char) * (strlen(codes->nodes[min]->code) + 2));
+		codes->nodes[codes->n - 2]->code = malloc(sizeof(char) * (strlen(codes->nodes[min]->code) + 2));
+		strcpy(codes->nodes[codes->n - 1]->code, codes->nodes[min]->code);
+		strcpy(codes->nodes[codes->n - 2]->code, codes->nodes[min]->code);
+		strcat(codes->nodes[codes->n - 1]->code, "0\0");
+		strcat(codes->nodes[codes->n - 2]->code, "1\0");
+
+			// Zwalnianie 
+		//free(codes->nodes[min]->code);
+		free_node(codes->nodes[min]);
+		remove_node(codes, min);
+		
+		printf("\n");
 		for(i = 0; i < codes->n; i++)
 			printf("%d: %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);	
 
@@ -100,8 +130,7 @@ int main(int argc, char **argv)
 
 		// Zwalnianie pamięci dla następnego pliku
 		free_node_vec(nodes);
-
-		for(i = 0; i < codes->n; i++)
+		for (i = 0; i < codes->n; i++)
 			free_node(codes->nodes[i]);
 		free_node_vec(codes);
 		free_tree(root);

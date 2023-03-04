@@ -39,6 +39,22 @@ int add_node(node_vec_t *vec, node_t *node)
 	return 0;
 }
 
+
+int remove_node(node_vec_t *vec, int index)
+{
+	int i;
+
+	if (index < 0 || index > vec->n - 1)
+		return 1;
+	
+	for (i = index; i < vec->n - 1; i++)
+		vec->nodes[i] = vec->nodes[i + 1];
+
+	vec->n--;
+
+	return 0;
+}
+
 void free_node_vec(node_vec_t *vec)
 {
 	free(vec->nodes);

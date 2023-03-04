@@ -13,6 +13,7 @@ typedef struct Node_vec
 node_vec_t * init_node_vec(int);
 int double_node_capacity(node_vec_t*);
 int add_node(node_vec_t *, node_t *);
+int remove_node(node_vec_t *, int);
 void free_node_vec(node_vec_t*);
 
 #endif
