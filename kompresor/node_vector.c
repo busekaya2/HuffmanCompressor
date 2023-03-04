@@ -1,6 +1,7 @@
 #include "node_vector.h"
 #include "node.h"
-#include <stdlib.h>
+#include <stdlib.h> 
+
 
 node_vec_t * init_node_vec(int capacity)
 {
@@ -40,21 +41,8 @@ int add_node(node_vec_t *vec, node_t *node)
 }
 
 
-int remove_node(node_vec_t *vec, int index)
-{
-	int i;
-
-	if (index < 0 || index > vec->n - 1)
-		return 1;
-	
-	for (i = index; i < vec->n - 1; i++)
-		vec->nodes[i] = vec->nodes[i + 1];
-
-	vec->n--;
-
-	return 0;
-}
-
+/* UWAGA - Funkcja nie zwalnia zawartości wektora, jedynie strukturę.
+ * Zawartość należy zwolnić ręcznie */
 void free_node_vec(node_vec_t *vec)
 {
 	free(vec->nodes);

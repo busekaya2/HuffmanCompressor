@@ -1,6 +1,11 @@
 #ifndef NODE
 #define NODE
 
+
+/* Struktura odpowiada za przchowywanie węzła.
+ * Posiada informacje o znaku, częstości, kodzie, prawym i lewym wskażniku na kolejny węzęł. */
+
+
 typedef struct Node
 {
 	int sign;

@@ -38,6 +38,8 @@ int add_word(word_vec_t *vec, char *word)
 	return 0;
 }
 
+/* UWAGA - Funkcja nie zwalnia zawartości wektora, jedynie strukturę.
+ * Zawartość należy zwolnić ręcznie */
 void free_word_vec(word_vec_t *vec)
 {
 	free(vec->words);
