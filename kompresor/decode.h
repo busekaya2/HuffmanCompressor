@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "node.h"
-#include "vector.h"
+#include "node_vector.h"
 
 
-char* byte_to_binary(unsigned char byte);
-
-void decode(FILE *in, FILE *out, vector_t *codes, char*);
+char* byte_to_binary(unsigned char);
+void decode(FILE*, FILE*, node_vec_t*);
