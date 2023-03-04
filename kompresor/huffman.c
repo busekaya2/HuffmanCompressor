@@ -25,6 +25,10 @@ node_t * make_tree(node_vec_t *nodes)
 		// Łączenie dwóch pierweszych węzłów ze sobą
 		nodes->nodes[0] = init_node(0, nodes->nodes[0]->freq + nodes->nodes[1]->freq, nodes->nodes[0], nodes->nodes[1]);
 
+		if (nodes->nodes[0] == NULL)
+			// Błąd alokacji pamięci
+			return NULL;
+
 		// Przesywanie reszty węzłów by wypełnić lukę
 		for (i = 1; i < nodes->n - 1; i++)
             		nodes->nodes[i] = nodes->nodes[i + 1];

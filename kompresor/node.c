@@ -7,6 +7,7 @@ node_t * init_node(int sign, int freq, node_t *left, node_t *right)
 	node_t *newnode = malloc(sizeof(node_t));
 	
 	if(newnode == NULL)
+		// Błąd alokacji pamięci
 		return NULL;	
 
 	newnode->sign = sign;

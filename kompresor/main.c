@@ -6,22 +6,23 @@
 #include "node_vector.h"
 #include "huffman.h"
 #include "encode.h"
+#include "decode.h"
 
 
-#define BYTE_SIZE 256 	// Rozmiar jednego byte'a
+#define BYTE_SIZE 256 	// Rozmiar jednego bajta
 
 
 int main(int argc, char **argv)
 {
-	int i, j;
+	int i, j;				// Zmienne do iterowania
 
 	// Zmienne getopt
-	char opt;
+	char opt;				// Zmienna określająca opcję getopt
 	word_vec_t *files = init_word_vec(2); 	// Wektor przechowuje nazwy plików do skompresowania
 
-	// Czytanie plików
+	// Czytanie plików do kompresji
 	FILE *in; 				// Plik wejściowy
-	int freq[BYTE_SIZE]; 			// Częstość występowania byte'ów w pliku
+	int freq[BYTE_SIZE]; 			// Częstość występowania bajtów w pliku
 	int byte; 				// Przechowuje wartości <0; 255>
 
 	// Tworzenie drzewa
@@ -34,16 +35,19 @@ int main(int argc, char **argv)
 	char *file_ext; 			// Rozszerzenie originalnego pliku
 	FILE *out_file;				// Wyjściowy skompresowany plik
 	FILE *out_key;				// Wyjściowy plik z kodami znaków
+	FILE *out_decoded;			// Wyjściwy plik po wykonaniu dekompresji wcześniej skompresowanego pliku (opcja wywyołania)
 
 
 	// Wczytywanie opcji z getopt
-	while ((opt = getopt(argc, argv, "sco:f:")) != -1)
+	while ((opt = getopt(argc, argv, "dsco:f:")) != -1)
 	{
     		switch (opt)
 	      	{
 	      		case 'f':
 				// Dodawanie nowego pliku do komresji
-        			add_word(files, optarg);
+        			if (add_word(files, optarg) == 1) {
+					fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]); return 3;
+				}
         			break;
   	    		case '?':
 				break;
@@ -54,12 +58,9 @@ int main(int argc, char **argv)
 	for(j = 0; j < files->n; j++)
 	{	
 		// Otwieranie pliku
-		printf("%s\n", files->words[j]);
 		in = fopen(files->words[j], "rb");
-		if(in == NULL)
-		{
-			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
-			return 1;
+		if(in == NULL) {
+			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]); return 1;
 		}
 		
 		// Zerowanie częstości byte'ów dla pliku
@@ -74,42 +75,92 @@ int main(int argc, char **argv)
 
 		// Tworzenie struktur węzłów
 		nodes = init_node_vec(8);
+
+		if (nodes == NULL) {
+			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów: %s\n", argv[0], files->words[j]); return 3;
+		}
+
 		for(i = 0; i < BYTE_SIZE; i++)
+		{
 			if(freq[i] != 0)
-				add_node(nodes, init_node(i, freq[i], NULL, NULL));
+			{
+				if (add_node(nodes, init_node(i, freq[i], NULL, NULL)) == 1) {
+					fprintf(stderr, "%s: Błąd alokacji pamięci węzła: %s\n", argv[0], files->words[j]); return 3;
+				}
+			}
+		}
 		
-		// Dodawanie węzła ze znakiem końca pliku
-		add_node(nodes, init_node(-1, 1, NULL, NULL));
+		// Dodawanie węzła ze znakiem końca pliku (-1)
+		if (add_node(nodes, init_node(-1, 1, NULL, NULL)) == 1) {
+			fprintf(stderr, "%s: Błąd alokacji pamięci węzła końcowego: %s\n", argv[0], files->words[j]); return 3;
+		}
 
 		// Tworzenie drzewa
 		root = make_tree(nodes);
-		printf("root sum: %d\n", root->freq);
-	
+		if (root == NULL) {
+			fprintf(stderr, "%s: Błąd alokacji pamięci drzewa: %s\n", argv[0], files->words[j]); return 3;
+		}
+
 		// Czytanie kodów z drzewa
 		codes = init_node_vec(8);
+		if (codes == NULL) {
+			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów z kodami: %s\n", argv[0], files->words[j]); return 3;
+		}
+
+
 		temp_code[0] = '\0';
 		read_codes(root, codes, temp_code);
 
-		/*
-		printf("\n");
-		for(i = 0; i < codes->n; i++)
-			printf("%d: %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);	
-		*/
+		for (i = 0; i < codes->n; i++) {
+			if (codes->nodes[i]->code == NULL) {
+				fprintf(stderr, "%s: Błąd alokacji pamięci kodu: %s\n", argv[0], files->words[j]); return 3;
+			}
+		}
 
 		// Odczytywanie rozszerzenia oryginalnego pliku
 		file_ext = strrchr(files->words[j], '.');
-		file_ext++;
+		if (file_ext != NULL)
+			file_ext++;
 
 		// Kodowanie pliku
 		in = fopen(files->words[j], "rb");
+		if (in == NULL) {
+			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]); return 1;
+		}
+
 		out_file = fopen("test.huf", "wb");
+		if (out_file == NULL) {
+			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]); return 2;
+		}
+
 		out_key = fopen("test.key", "w");
+		if (out_key == NULL) {
+			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]); return 2;
+		}
+
 		encode(in, out_file, out_key, file_ext, codes);
+
 		fclose(in);
 		fclose(out_file);
 		fclose(out_key);
 
-		// Zwalnianie pamięci dla następnego pliku
+		// Dekodowanie pliku (opcja wywołania)
+		out_decoded = fopen("decoded.txt", "wb");
+		if (out_decoded == NULL) {
+			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]); return 2;
+		}
+
+		out_file = fopen("test.huf", "rb");
+		if (out_file == NULL) {
+			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]); return 1;
+		}
+
+		decode(out_file, out_decoded, codes);
+		
+		fclose(out_decoded);
+		fclose(out_file);
+
+		// Zwalnianie pamięci by następny plik mógł nadpisać
 		free_node_vec(nodes);
 		for (i = 0; i < codes->n; i++)
 			free_node(codes->nodes[i]);
