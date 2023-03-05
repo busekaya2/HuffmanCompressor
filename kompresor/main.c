@@ -27,19 +27,10 @@ void help()
 
 
 // Zwraca rozmiar pliku w KB
-long int get_file_size(char* filename)
+long int get_file_size(FILE *f)
 {
-	FILE *f = fopen(filename, "rb");
-
-	if (f == NULL)
-	{
-		// Brak uprawnień
-		return -1;
-	}
-
 	fseek(f, 0L, SEEK_END);
 	long int file_size = ftell(f);
-	fclose(f);
 
 	return file_size / 1024;
 }
@@ -225,6 +216,14 @@ int main(int argc, char **argv)
 		}
 
 		encode(in, out_file, out_key, file_ext, codes);
+	
+		// Wyświetlanie rozmiatu pliku przed i po kompresji (opcja wywołania)
+		if (show_file_size)
+		{
+			printf("%s\n", files->words[j]);
+			printf("\tRozmiar przed kompresją: %ld [KB]\n", get_file_size(in));
+			printf("\tRozmiar po kompresji: %ld [KB]\n", get_file_size(out_file) + get_file_size(out_key));
+		}
 
 		fclose(in);
 		fclose(out_file);
@@ -266,13 +265,6 @@ int main(int argc, char **argv)
 
 			fclose(out_decoded);
 			fclose(out_file);
-		}
-
-		if (show_file_size)
-		{
-			printf("%s\n", files->words[j]);
-			printf("\tRozmiar przed kompresją: %ld [KB]\n", get_file_size(files->words[j]));
-			printf("\tRozmiar po kompresji: %ld [KB]\n", get_file_size(out_file_name) + get_file_size(out_key_name));
 		}
 
 		// Zwalnianie pamięci by następny plik mógł nadpisać
