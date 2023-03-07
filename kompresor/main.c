@@ -75,8 +75,10 @@ int main(int argc, char **argv)
 	      	{
 	      		case 'f':
 				// Dodawanie nowego pliku do komresji
-        			if (add_word(files, optarg) == 1) {
-					fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]); return 3;
+        			if (add_word(files, optarg) == 1)
+				{
+					fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]);
+					return 3;
 				}
         			break;
 	      		case 'd':
@@ -102,8 +104,10 @@ int main(int argc, char **argv)
 	{	
 		// Otwieranie pliku
 		in = fopen(files->words[j], "rb");
-		if(in == NULL) {
-			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]); return 1;
+		if(in == NULL)
+		{
+			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
+			return 1;
 		}
 		
 		// Zerowanie częstości byte'ów dla pliku
@@ -119,43 +123,56 @@ int main(int argc, char **argv)
 		// Tworzenie struktur węzłów
 		nodes = init_node_vec(8);
 
-		if (nodes == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów: %s\n", argv[0], files->words[j]); return 3;
+		if (nodes == NULL)
+		{
+			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
 
 		for(i = 0; i < BYTE_SIZE; i++)
 		{
 			if(freq[i] != 0)
 			{
-				if (add_node(nodes, init_node(i, freq[i], NULL, NULL)) == 1) {
-					fprintf(stderr, "%s: Błąd alokacji pamięci węzła: %s\n", argv[0], files->words[j]); return 3;
+				if (add_node(nodes, init_node(i, freq[i], NULL, NULL)) == 1)
+				{
+					fprintf(stderr, "%s: Błąd alokacji pamięci węzła: %s\n", argv[0], files->words[j]);
+					return 3;
 				}
 			}
 		}
 		
 		// Dodawanie węzła ze znakiem końca pliku (-1)
-		if (add_node(nodes, init_node(-1, 1, NULL, NULL)) == 1) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci węzła końcowego: %s\n", argv[0], files->words[j]); return 3;
+		if (add_node(nodes, init_node(-1, 1, NULL, NULL)) == 1)
+		{
+			fprintf(stderr, "%s: Błąd alokacji pamięci węzła końcowego: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
 
 		// Tworzenie drzewa
 		root = make_tree(nodes);
-		if (root == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci drzewa: %s\n", argv[0], files->words[j]); return 3;
+		if (root == NULL)
+		{
+			fprintf(stderr, "%s: Błąd alokacji pamięci drzewa: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
 
 		// Czytanie kodów z drzewa
 		codes = init_node_vec(8);
-		if (codes == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów z kodami: %s\n", argv[0], files->words[j]); return 3;
+		if (codes == NULL)
+		{
+			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów z kodami: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
 
 		temp_code[0] = '\0';
 		read_codes(root, codes, temp_code);
 
-		for (i = 0; i < codes->n; i++) {
-			if (codes->nodes[i]->code == NULL) {
-				fprintf(stderr, "%s: Błąd alokacji pamięci kodu: %s\n", argv[0], files->words[j]); return 3;
+		for (i = 0; i < codes->n; i++)
+		{
+			if (codes->nodes[i]->code == NULL)
+			{
+				fprintf(stderr, "%s: Błąd alokacji pamięci kodu: %s\n", argv[0], files->words[j]);
+				return 3;
 			}
 		}
 
@@ -179,8 +196,10 @@ int main(int argc, char **argv)
 		
 		// Zapisywanie nazwy pliku bez rozszerzenia
 		file_name = malloc(sizeof(char) * (file_name_n + 1));
-		if (file_name == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]); return 3;
+		if (file_name == NULL)
+		{
+			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
 
 		for (i = 0; i < file_name_n; i++)
@@ -190,8 +209,10 @@ int main(int argc, char **argv)
 		// Tworzenie nazw plików wyjściowych
 		out_file_name = malloc(sizeof(char) * (file_name_n + 5));
 		out_key_name = malloc(sizeof(char) * (file_name_n + 5));
-		if (out_file_name == NULL || out_key_name == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]); return 3;
+		if (out_file_name == NULL || out_key_name == NULL)
+		{
+			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
 		
 		strcpy(out_file_name, file_name);
@@ -201,18 +222,24 @@ int main(int argc, char **argv)
 				
 		// Kodowanie pliku
 		in = fopen(files->words[j], "rb");
-		if (in == NULL) {
-			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]); return 1;
+		if (in == NULL)
+		{
+			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
+			return 1;
 		}
 
 		out_file = fopen(out_file_name, "wb");
-		if (out_file == NULL) {
-			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]); return 2;
+		if (out_file == NULL)
+		{
+			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]);
+			return 2;
 		}
 
 		out_key = fopen(out_key_name, "w");
-		if (out_key == NULL) {
-			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]); return 2;
+		if (out_key == NULL)
+		{
+			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]);
+			return 2;
 		}
 
 		encode(in, out_file, out_key, file_ext, codes);
@@ -236,8 +263,10 @@ int main(int argc, char **argv)
 				out_decoded_name = malloc(sizeof(char) * (file_name_n + 10 + strlen(file_ext)));
 			else
 				out_decoded_name = malloc(sizeof(char) * (file_name_n + 9));
-			if (out_decoded_name == NULL) {
-				fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]); return 3;
+			if (out_decoded_name == NULL)
+			{
+				fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]);
+				return 3;
 			}
 
 			strcpy(out_decoded_name, file_name);
@@ -250,13 +279,17 @@ int main(int argc, char **argv)
 			strcat(out_decoded_name, "\0");
 		
 			out_decoded = fopen(out_decoded_name, "wb");
-			if (out_decoded == NULL) {
-				fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]); return 2;
+			if (out_decoded == NULL)
+			{
+				fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]);
+				return 2;
 			}
 
 			out_file = fopen(out_file_name, "rb");
-			if (out_file == NULL) {
-				fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]); return 1;
+			if (out_file == NULL)
+			{
+				fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
+				return 1;
 			}
 
 			decode(out_file, out_decoded, codes);
