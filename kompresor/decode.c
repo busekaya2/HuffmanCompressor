@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "node_vector.h"
+#include "node.h"
 
 
-/* Zamienia jeden byte na 8 bitów */
+/* Zamienia jeden byte na 8 bitów zapisanych jako char* */
 char *byte_to_binary(char byte)
 {
 	char* binary = (char*) malloc(9 * sizeof(char)); // 8 bitów + '\0'
@@ -25,14 +25,14 @@ char *byte_to_binary(char byte)
 
 
 /* Funkcja dekompresująca plik ".huf" w celu sprawdzenia poprawności kompresora.
- * Przujmuje wskaźniki na plik wejściowy i wyjściowy oraz wektor przechowujący kody znaków */
-int decode(FILE *in, FILE *out, node_vec_t *codes)
+ * Przujmuje wskaźniki na plik wejściowy i wyjściowy oraz korzeń drzewa */
+int decode(FILE *in, FILE *out, node_t *root)
 {
-	int c, i, j;		// Zmienne do iterowania
-	char str[999]; 		// String bitów z pliku
-	int str_i = 0;		// Ile bitów jest w stringu
-	char* bin;		// Jeden bajt jako 8 bitów
+	int c, i;			// Zmienne do iterowania
+	char* bin;			// Jeden bajt jako 8 bitów
+	node_t *head = root;		// Wskaźnik na badany węzeł drzewa
 	
+	// "Zjadanie" części słownikowej pliku ponieważ mamy już drzewo
 	while ((c = fgetc(in)) != '\0') {}
 
 	while ((c = fgetc(in)) != EOF)
@@ -43,32 +43,27 @@ int decode(FILE *in, FILE *out, node_vec_t *codes)
 		if (bin == NULL) 
 			return 1;
 
-		// Dodajemy bit do stringa
 		for (i = 0; i < strlen(bin); i++)
 		{
-			str[str_i++] = bin[i];
-			str[str_i] = '\0';
+			// Idziemy w głąb drzewa
+			if (bin[i] == '0')
+				head = head->left;
+			if (bin[i] == '1')
+				head = head->right;
 
-			// Szukamy kodu w wektorze
-			for (j = 0; j<codes->n; j++)
+			if (head->left == NULL && head->right == NULL)
 			{
-				if (strcmp(str, codes->nodes[j]->code) == 0)
+				// Znaleziono znak końca
+				if (head->sign == -1)
 				{
-					// Znak końca pliku, jak znajdziemy to nara
-					if (codes->nodes[j]->sign == -1)
-					{	
-						free(bin);
-						return 0;
-					}
-					
-					// Zapisz bajt to pliku
-					fwrite(&(codes->nodes[j]->sign), 1, sizeof(char), out);
-					
-					// Wyczyść string bitów
-					str_i = 0;
-					str[0] = '\0';
-					break;
+					free(bin);
+					return 0;
 				}
+
+				// Zapisywanie bajta do pliku i powrót do korzenia
+				fwrite(&(head->sign), 1, sizeof(char), out);
+				head = root;
+		
 			}
 		}
 		free(bin);

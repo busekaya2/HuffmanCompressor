@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 				return 1;
 			}
 
-			decode(out_file, out_decoded, codes);
+			decode(out_file, out_decoded, root);
 		
 			free(out_decoded_name);
 

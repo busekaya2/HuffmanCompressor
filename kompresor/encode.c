@@ -38,7 +38,7 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes)
 	
 	// Znak '\0' mówiący o końcu części słownikowej
 	fwrite(&byte, 1, sizeof(byte), out_file);
-	
+
 	// Ładowanie kodów znaków do pliku
 	while ((c = getc(in)) != EOF)
 	{
@@ -57,7 +57,7 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes)
 				shift = 0;
 			}
 
-			// Zapisywanie bity do bajta
+			// Zapisywanie bitu do bajta
 			byte |= ((code[i] - '0') << (7 - shift));
 			shift++;
 		}
