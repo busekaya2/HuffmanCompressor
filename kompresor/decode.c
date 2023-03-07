@@ -4,8 +4,7 @@
 #include "node.h"
 
 /* Zamienia jeden bajt na 8 bitów zapisanych jako char* */
-char *byte_to_binary(char byte)
-{
+char *byte_to_binary(char byte){
 	char* binary = (char*) malloc(9 * sizeof(char)); // 8 bitów + '\0'
 	if (binary == NULL)
 		// Błąd alokacji pamięci
@@ -21,8 +20,7 @@ char *byte_to_binary(char byte)
 
 /* Funkcja dekompresująca plik ".huf" w celu sprawdzenia poprawności kompresora.
  * Przujmuje wskaźniki na plik wejściowy i wyjściowy oraz korzeń drzewa */
-int decode(FILE *in, FILE *out, node_t *root)
-{
+int decode(FILE *in, FILE *out, node_t *root){
 	int c, i;			// Zmienne do iterowania
 	char* bin;			// Jeden bajt jako 8 bitów
 	node_t *head = root;		// Wskaźnik na badany węzeł drzewa

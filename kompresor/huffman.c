@@ -5,14 +5,12 @@
 #include "node.h"
 
 // Funkcja porównuje dwa węzły pod względem częstości występowania znaku.
-int node_cmp(const void *a, const void *b)
-{
+int node_cmp(const void *a, const void *b){
 	return (*(node_t**)a)->freq - (*(node_t**)b)->freq;
 }
 
 // Funkcja tworzy strukturę drzewa Huffmana i na koniec zwraca węzeł będący korzeniem tego drzewa.
-node_t * make_tree(node_vec_t *nodes)
-{
+node_t * make_tree(node_vec_t *nodes){
 	int i;
 	node_t *temp;
 
@@ -45,8 +43,7 @@ node_t * make_tree(node_vec_t *nodes)
 
 
 // Funckja porusza się po dzrewie Huffmana i zapisuje znaki i ich kody do wektora węzłów
-void read_codes(node_t *head, node_vec_t *codes, char *temp_code)
-{
+void read_codes(node_t *head, node_vec_t *codes, char *temp_code){
 	char *tmp;
 
 	if(head->left != NULL){
@@ -74,8 +71,7 @@ void read_codes(node_t *head, node_vec_t *codes, char *temp_code)
 
 
 // Zwalnia węzły należące do drzewa Huffmana
-void free_tree(node_t *root)
-{	
+void free_tree(node_t *root){	
 	if(root->left != NULL)
 		free_tree(root->left);		
 

@@ -10,8 +10,7 @@
 
 #define BYTE_SIZE 256 	// Rozmiar jednego bajta
 
-void help()
-{
+void help(){
 	printf("Program kompresuje pliki z wykorzystaniem algorytmu Huffmana.\n");
 	printf("Przy kompresji tworzony jest plik z roszerzeniem .huf zawierający skompresowane dane oraz klucz do ich dekompresji.\n\n");
 	printf("Składnia: ./compressor.exe [-f PLIK] [-s] [-h] [-d]\n\n");
@@ -25,16 +24,14 @@ void help()
 }
 
 // Zwraca rozmiar pliku w KB
-long int get_file_size(FILE *f)
-{
+long int get_file_size(FILE *f){
 	fseek(f, 0L, SEEK_END);
 	long int file_size = ftell(f);
 
 	return file_size / 1024;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
 	int i, j;				// Zmienne do iterowania
 
 	// Zmienne getopt

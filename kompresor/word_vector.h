@@ -4,8 +4,7 @@
 /* Struktura dynamicznego wektora przechowującego wskaźniki na ciągi znaków.
  * UWAGA - Wektor nie odpowiada za zwalnianie pamięci zawartości, należy to robić ręcznie*/
 
-typedef struct Word_vec
-{	
+typedef struct Word_vec{	
 	char **words;
 	int n;
 	int capacity;
