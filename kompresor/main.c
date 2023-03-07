@@ -88,21 +88,28 @@ int main(int argc, char **argv){
 		}
 	}
 
+	if (files->n < 1)
+	{
+		fprintf(stderr, "%s: Nie podano żadnego pliku.\n\n", argv[0]);
+		help();
+		return 1;
+	}
+
 	// Iterowanie po plikach do skompresowania
-	for(j = 0; j < files->n; j++){	
+	for (j = 0; j < files->n; j++){	
 		// Otwieranie pliku
 		in = fopen(files->words[j], "rb");
-		if(in == NULL){
+		if (in == NULL){
 			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
 			return 1;
 		}
 		
 		// Zerowanie częstości byte'ów dla pliku
-		for(i = 0; i < BYTE_SIZE; i++)
+		for (i = 0; i < BYTE_SIZE; i++)
 			freq[i] = 0;
 		
 		// Liczenie częstości znaków
-		while((byte = fgetc(in)) != EOF)
+		while ((byte = fgetc(in)) != EOF)
 			freq[byte]++;
 		
 		fclose(in);
@@ -114,7 +121,7 @@ int main(int argc, char **argv){
 			return 3;
 		}
 
-		for(i = 0; i < BYTE_SIZE; i++){
+		for (i = 0; i < BYTE_SIZE; i++){
 			if(freq[i] != 0){
 				if (add_node(nodes, init_node(i, freq[i], NULL, NULL)) == 1){
 					fprintf(stderr, "%s: Błąd alokacji pamięci węzła: %s\n", argv[0], files->words[j]);

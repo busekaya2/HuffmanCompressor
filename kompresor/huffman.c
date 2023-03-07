@@ -46,17 +46,17 @@ node_t * make_tree(node_vec_t *nodes){
 void read_codes(node_t *head, node_vec_t *codes, char *temp_code){
 	char *tmp;
 
-	if(head->left != NULL){
+	if (head->left != NULL){
 		strcat(temp_code, "0\0");
 		read_codes(head->left, codes, temp_code);
 	}
 
-	if(head->right != NULL){
+	if (head->right != NULL){
 		strcat(temp_code, "1\0");
 		read_codes(head->right, codes, temp_code);
 	}
 
-	if(head->left == NULL && head->right == NULL){
+	if (head->left == NULL && head->right == NULL){
 		/* Alokowanie pamięci dla ciągu znaków przechowującego kod
 		 * Pamięc zostanie zwolniona przy wywołaniu funkcji zwalniającej cały węzęł. */
 		tmp = malloc(sizeof(char) * (strlen(temp_code) + 1));
@@ -65,17 +65,17 @@ void read_codes(node_t *head, node_vec_t *codes, char *temp_code){
 		codes->nodes[codes->n - 1]->code = tmp;
 	}	
 
-	if(strlen(temp_code) > 0)
+	if (strlen(temp_code) > 0)
 		temp_code[strlen(temp_code) - 1] = '\0';
 }
 
 
 // Zwalnia węzły należące do drzewa Huffmana
 void free_tree(node_t *root){	
-	if(root->left != NULL)
+	if (root->left != NULL)
 		free_tree(root->left);		
 
-	if(root->right != NULL)
+	if (root->right != NULL)
 		free_tree(root->right);
 
 	free_node(root);

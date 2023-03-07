@@ -31,8 +31,8 @@ int decode(FILE *in, FILE *out, node_t *root){
 	while ((c = fgetc(in)) != EOF){
 		bin = byte_to_binary(c);
 		
-		// Błąd alokacji pamięci
 		if (bin == NULL) 
+			// Błąd alokacji pamięci
 			return 1;
 
 		for (i = 0; i < strlen(bin); i++){
@@ -44,8 +44,8 @@ int decode(FILE *in, FILE *out, node_t *root){
 				head = head->right;
 
 			if (head->left == NULL && head->right == NULL){
-				// Znaleziono znak końca
 				if (head->sign == -1){
+					// Znaleziono znak końca
 					free(bin);
 					return 0;
 				}
