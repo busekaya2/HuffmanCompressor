@@ -1,10 +1,8 @@
 #ifndef WORD_VEC
 #define WORD_VEC
 
-
 /* Struktura dynamicznego wektora przechowującego wskaźniki na ciągi znaków.
  * UWAGA - Wektor nie odpowiada za zwalnianie pamięci zawartości, należy to robić ręcznie*/
-
 
 typedef struct Word_vec
 {	

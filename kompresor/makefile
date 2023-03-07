@@ -5,7 +5,7 @@ debug: main.c node.c node_vector.c word_vector.c huffman.c encode.c decode.c
 	@cc -ggdb main.c node.c node_vector.c word_vector.c huffman.c encode.c decode.c -o compressor.exe
 
 test: compressor.exe
-	@echo "1) Test na prostym pliku tekstowym zawierającym ciąg: abcda:"
+	@echo "1) Test na prostym pliku tekstowym zawierającym ciąg abcda:"
 	./compressor.exe -f ./test/simple.txt -d
 	@echo "Kody poszczególnych znaków można odczytać ze skompresowanego pliku:"
 	@sed '$$d' ./test/simple.huf

@@ -2,7 +2,6 @@
 #include <string.h>
 #include "node_vector.h"
 
-
 /* Szuka kodów w wektorze i zwraca ten pasujący do danego znaku */
 char *find_code(int sign, node_vec_t *codes)
 {
@@ -11,9 +10,9 @@ char *find_code(int sign, node_vec_t *codes)
 	for (i = 0; i < codes->n; i++)
 		if(codes->nodes[i]->sign == sign)
 			return codes->nodes[i]->code;
+	
 	return NULL;
 }
-
 
 /* Funkcja kodująca znaki do pliku oraz tworząca plik klucz
  * Czytamy kolejne bajty pliku, znajdujemy odpowiednie kody a następnie ładujemy je do pliku wyjściowego.
@@ -40,16 +39,13 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes)
 	fwrite(&byte, 1, sizeof(byte), out_file);
 
 	// Ładowanie kodów znaków do pliku
-	while ((c = getc(in)) != EOF)
-	{
+	while ((c = getc(in)) != EOF){
 		// Szukamy kodu znaku
 		code = find_code(c, codes);
 
 		// Zapisujemy bit po bicie do pliku wyjściowego
-		for (i = 0; i < strlen(code); i++)
-		{
-			if (shift > 7)
-			{
+		for (i = 0; i < strlen(code); i++){
+			if (shift > 7){
 				/* Jeśli przesunięto już o 8 bitów to zapisujemy do pliku.
 				 * Zerujemy bajt */
 				fwrite(&byte, 1, sizeof(byte), out_file);
@@ -65,10 +61,8 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes)
 
 	//  Ładowanie znaku końca (-1) do pliku
 	code = find_code(-1, codes);		
-	for (i = 0; i < strlen(code); i++)
-	{
-		if (shift > 7)
-		{
+	for (i = 0; i < strlen(code); i++){
+		if (shift > 7){
 			fwrite(&byte, 1, sizeof(byte), out_file);
 			byte = 0;
 			shift = 0;
@@ -78,10 +72,10 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes)
 	}
 		
 	// Uzupełnianie zerami jeśli nie wypełniono całego bajta
-	while (shift < 8)
-	{
+	while (shift < 8){
 		byte |= (0 << (7 - shift));
 		shift++;
 	}
+
 	fwrite(&byte, 1, sizeof(byte), out_file);
 }

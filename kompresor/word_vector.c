@@ -1,7 +1,6 @@
 #include "word_vector.h"
 #include <stdlib.h>
 
-
 word_vec_t * init_word_vec(int capacity)
 {
 	word_vec_t *new = malloc(sizeof(word_vec_t));

@@ -2,7 +2,6 @@
 #include "node.h"
 #include <stdlib.h> 
 
-
 node_vec_t * init_node_vec(int capacity)
 {
 	node_vec_t *new = malloc(sizeof(node_vec_t));
@@ -43,7 +42,6 @@ int add_node(node_vec_t *vec, node_t *node)
 
 	return 0;
 }
-
 
 /* UWAGA - Funkcja nie zwalnia zawartości wektora, jedynie strukturę.
  * Zawartość należy zwolnić ręcznie */

@@ -3,10 +3,8 @@
 
 #include "node.h"
 
-
 /* Struktura dynamicznego wektora przechowującego wskaźniki na węzły.
  * UWAGA - Wektor nie odpowiada za zwalnianie pamięci zawartości, należy to robić ręcznie*/
-
 
 typedef struct Node_vec
 {	
