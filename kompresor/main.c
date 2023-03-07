@@ -62,10 +62,8 @@ int main(int argc, char **argv)
 	int file_name_n;			// Długość nazwy oryginalnego pliku bez rozszerzenia
 	char *file_name;			// Nazwa oryginalnego pliku bez rozszerzenia
 	char *out_file_name;			// Nazwa skompresowanego pliku wyjściowego
-	char *out_key_name;			// Nazwa wyjściowego pliku klucza
 	char *out_decoded_name;			// Nazwa zdekompresowanego pliku (opcja wywołania)
 	FILE *out_file;				// Wyjściowy skompresowany plik
-	FILE *out_key;				// Wyjściowy plik z kodami znaków
 	FILE *out_decoded;			// Wyjściowy plik po wykonaniu dekompresji skompresowanego pliku (opcja wywyołania)
 
 	// Wczytywanie opcji z getopt
@@ -208,17 +206,14 @@ int main(int argc, char **argv)
 		
 		// Tworzenie nazw plików wyjściowych
 		out_file_name = malloc(sizeof(char) * (file_name_n + 5));
-		out_key_name = malloc(sizeof(char) * (file_name_n + 5));
-		if (out_file_name == NULL || out_key_name == NULL)
+		if (out_file_name == NULL)
 		{
 			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 		
 		strcpy(out_file_name, file_name);
-		strcpy(out_key_name, file_name);
 		strcat(out_file_name, ".huf\0");
-		strcat(out_key_name, ".key\0");		
 				
 		// Kodowanie pliku
 		in = fopen(files->words[j], "rb");
@@ -235,26 +230,18 @@ int main(int argc, char **argv)
 			return 2;
 		}
 
-		out_key = fopen(out_key_name, "w");
-		if (out_key == NULL)
-		{
-			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]);
-			return 2;
-		}
-
-		encode(in, out_file, out_key, file_ext, codes);
+		encode(in, out_file, file_ext, codes);
 	
 		// Wyświetlanie rozmiatu pliku przed i po kompresji (opcja wywołania)
 		if (show_file_size)
 		{
 			printf("%s\n", files->words[j]);
 			printf("\tRozmiar przed kompresją: %ld [KB]\n", get_file_size(in));
-			printf("\tRozmiar po kompresji: %ld [KB]\n", get_file_size(out_file) + get_file_size(out_key));
+			printf("\tRozmiar po kompresji: %ld [KB]\n", get_file_size(out_file));
 		}
 
 		fclose(in);
 		fclose(out_file);
-		fclose(out_key);
 
 		// Dekodowanie pliku (opcja wywołania)
 		if (decode_file)
@@ -303,7 +290,6 @@ int main(int argc, char **argv)
 		// Zwalnianie pamięci by następny plik mógł nadpisać
 		free(file_name);
 		free(out_file_name);
-		free(out_key_name);
 		free_node_vec(nodes);
 		for (i = 0; i < codes->n; i++)
 			free_node(codes->nodes[i]);

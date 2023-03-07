@@ -33,6 +33,8 @@ int decode(FILE *in, FILE *out, node_vec_t *codes)
 	int str_i = 0;		// Ile bitów jest w stringu
 	char* bin;		// Jeden bajt jako 8 bitów
 	
+	while ((c = fgetc(in)) != '\0') {}
+
 	while ((c = fgetc(in)) != EOF)
 	{
 		bin = byte_to_binary(c);

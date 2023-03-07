@@ -18,13 +18,27 @@ char *find_code(int sign, node_vec_t *codes)
 /* Funkcja kodująca znaki do pliku oraz tworząca plik klucz
  * Czytamy kolejne bajty pliku, znajdujemy odpowiednie kody a następnie ładujemy je do pliku wyjściowego.
  * Na sam koniec ładujemy znak końca pliku (-1) i uzupełniamy zerami do pełnego bajta jeśli trzeba. */
-void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, node_vec_t *codes)
+void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes)
 {
 	char byte = 0;			// Wartość bajta który będzie zapisywany do pliku wyjściowego.
 	int shift = 0;			// Przesunięcie bitowe zmiennej byte.
 	char* code;			// Wskaźnik na kod znaku
 	int i, c;			// Zmienne do iterowania
 
+	/* Zapisywanie rozszerzenia oryginalnego pliku jako pierwsza linia.
+	 * Pierwsza linia pusta jeśli brak rozszerzenia (sam znak '\n')*/
+	if (file_ext != NULL)
+		fprintf(out_file, "%s\n", file_ext);
+	else
+		fprintf(out_file, "\n");
+	
+	// Zapisywanie znaków i kodów do pliku.
+	for (i = 0; i < codes->n; i++)
+		fprintf(out_file, "%d %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);
+	
+	// Znak '\0' mówiący o końcu części słownikowej
+	fwrite(&byte, 1, sizeof(byte), out_file);
+	
 	// Ładowanie kodów znaków do pliku
 	while ((c = getc(in)) != EOF)
 	{
@@ -70,15 +84,4 @@ void encode(FILE *in, FILE *out_file, FILE *out_key, char* file_ext, node_vec_t 
 		shift++;
 	}
 	fwrite(&byte, 1, sizeof(byte), out_file);
-
-	/* Zapisywanie rozszerzenia oryginalnego pliku do pliku klucza jako pierwsza linia.
-	 * Pierwsza linia pusta jeśli brak rozszerzenia*/
-	if (file_ext != NULL)
-		fprintf(out_key, "%s\n", file_ext);
-	else
-		fprintf(out_key, "\n");
-	
-	// Zapisywanie znaków i kodów do pliku klucza.
-	for (i = 0; i < codes->n; i++)
-		fprintf(out_key, "%d %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);
 }
