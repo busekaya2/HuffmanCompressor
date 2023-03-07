@@ -4,22 +4,22 @@
 
 word_vec_t * init_word_vec(int capacity)
 {
-	word_vec_t *newvec = malloc(sizeof(word_vec_t));
+	word_vec_t *new = malloc(sizeof(word_vec_t));
 	
-	if(newvec == NULL)
+	if(new == NULL)
 		// Błąd alokacji pamięci
 		return NULL;
 	
-	newvec->words = malloc(sizeof(char*) * capacity);
+	new->words = malloc(sizeof(char*) * capacity);
 	
-	if(newvec->words == NULL)
+	if(new->words == NULL)
 		// Błąd alokacji pamięci
 		return NULL;
 
-	newvec->capacity = capacity;
-	newvec->n = 0;
+	new->capacity = capacity;
+	new->n = 0;
 	
-	return newvec;
+	return new;
 }
 
 int double_word_capacity(word_vec_t* vec)
