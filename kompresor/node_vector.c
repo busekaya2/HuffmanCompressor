@@ -8,7 +8,7 @@ node_vec_t * init_node_vec(int capacity){
 		// Błąd alokajci pamięci
 		return NULL;
 	
-	new->nodes = malloc(sizeof(node_vec_t) * capacity);
+	new->nodes = malloc(sizeof(node_vec_t*) * capacity);
 	if (new->nodes == NULL)
 		// Błąd alokacji pamięci
 		return NULL;
@@ -21,7 +21,7 @@ node_vec_t * init_node_vec(int capacity){
 
 int double_node_capacity(node_vec_t* vec){
 	vec->capacity *= 2;
-	vec->nodes = realloc(vec->nodes, sizeof(node_t) * vec->capacity);
+	vec->nodes = realloc(vec->nodes, sizeof(node_t*) * vec->capacity);
 	if (vec->nodes == NULL)
 		// Błąd alokacji pamięci
 		return 1;
