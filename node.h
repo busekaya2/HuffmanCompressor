@@ -1,5 +1,6 @@
-#ifndef NODE
-#define NODE
+#ifndef NODE_H
+#define NODE_H
+
 
 /* Struktura odpowiada za przechowywanie węzła.
  * Posiada informacje o znaku, częstości, kodzie, prawym i lewym wskażniku na kolejny węzeł. */
@@ -12,7 +13,8 @@ typedef struct Node{
 	struct Node *right;
 } node_t;
 
-node_t * init_node(int, int, node_t *, node_t *);
+node_t *init_node(int, int, node_t *, node_t *);
 void free_node(node_t *);
+
 
 #endif

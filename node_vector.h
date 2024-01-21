@@ -1,5 +1,6 @@
-#ifndef NODE_VEC
-#define NODE_VEC
+#ifndef NODE_VEC_H
+#define NODE_VEC_H
+
 
 #include "node.h"
 
@@ -17,5 +18,6 @@ int double_node_capacity(node_vec_t*);
 int add_node(node_vec_t *, node_t *);
 int remove_node(node_vec_t *, int);
 void free_node_vec(node_vec_t*);
+
 
 #endif

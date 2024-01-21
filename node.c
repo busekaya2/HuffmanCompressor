@@ -1,7 +1,8 @@
 #include "node.h"
 #include <stdlib.h>
+#include <stdio.h>
 
-node_t * init_node(int sign, int freq, node_t *left, node_t *right){
+node_t *init_node(int sign, int freq, node_t *left, node_t *right){
 	node_t *newnode = malloc(sizeof(node_t));
 	
 	if (newnode == NULL)

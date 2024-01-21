@@ -7,8 +7,11 @@
 #include "huffman.h"
 #include "encode.h"
 #include "decode.h"
+#include "heap_min.h"
 
-#define BYTE_SIZE 256 	// Rozmiar jednego bajta
+#define BYTE_SIZE 256
+#define DEFAULT_DATA_SIZE 8
+
 
 void help(){
 	printf("Program kompresuje pliki z wykorzystaniem algorytmu Huffmana.\n");
@@ -31,60 +34,64 @@ long int get_file_size(FILE *f){
 	return file_size / 1024;
 }
 
-int main(int argc, char **argv){
-	int i, j;				// Zmienne do iterowania
+int main(int argc, char **argv) {
+	int i, j;								// Zmienne do iterowania
 
 	// Zmienne getopt
-	char opt;				// Zmienna określająca opcję getopt
+	char opt;								// Zmienna określająca opcję getopt
 	word_vec_t *files = init_word_vec(2); 	// Wektor przechowuje nazwy plików do skompresowania
-	int show_file_size = 0;			// Opcja wyświetlenia rozmiaru przed i po komresji
-	int decode_file = 0;			// Opcja dekompresji skompresowanego pliku
+	int show_file_size = 0;					// Opcja wyświetlenia rozmiaru przed i po komresji
+	int decode_file = 0;					// Opcja dekompresji skompresowanego pliku
 
 	// Czytanie plików do kompresji
-	FILE *in; 				// Plik wejściowy
-	int freq[BYTE_SIZE]; 			// Częstość występowania bajtów w pliku
-	int byte; 				// Przechowuje wartości <0; 255>
+	FILE *in; 								// Plik wejściowy
+	int freq[BYTE_SIZE]; 					// Częstość występowania bajtów w pliku
+	int byte; 								// Przechowuje wartości <0; 255>
 
 	// Tworzenie drzewa
-	node_vec_t *nodes; 			// Wektor węzłów (bez kodów)
-	node_t *root; 				// Korzeń drzewa
+	heap_min_t *nodes; 						// Wektor węzłów (bez kodów)
+	node_t *root; 							// Korzeń drzewa
 
 	// Kodowanie do pliku
-	node_vec_t *codes; 			// Przechowuje węzły z kodami
-	char temp_code[BYTE_SIZE]; 		// Tymczasowy ciąg znaków potrzebny do generowania kodów
-	char *file_ext; 			// Rozszerzenie originalnego pliku
-	int file_name_n;			// Długość nazwy oryginalnego pliku bez rozszerzenia
-	char *file_name;			// Nazwa oryginalnego pliku bez rozszerzenia
-	char *out_file_name;			// Nazwa skompresowanego pliku wyjściowego
-	char *out_decoded_name;			// Nazwa zdekompresowanego pliku (opcja wywołania)
-	FILE *out_file;				// Wyjściowy skompresowany plik
-	FILE *out_decoded;			// Wyjściowy plik po wykonaniu dekompresji skompresowanego pliku (opcja wywyołania)
-
+	node_vec_t *codes; 						// Przechowuje węzły z kodami
+	char temp_code[BYTE_SIZE]; 				// Tymczasowy ciąg znaków potrzebny do generowania kodów
+	char *file_ext; 						// Rozszerzenie originalnego pliku
+	int file_name_n;						// Długość nazwy oryginalnego pliku bez rozszerzenia
+	char *file_name;						// Nazwa oryginalnego pliku bez rozszerzenia
+	char *out_file_name;					// Nazwa skompresowanego pliku wyjściowego
+	char *out_decoded_name;					// Nazwa zdekompresowanego pliku (opcja wywołania)
+	FILE *out_file;							// Wyjściowy skompresowany plik
+	FILE *out_decoded;						// Wyjściowy plik po wykonaniu dekompresji skompresowanego pliku (opcja wywyołania)
+	
 	// Wczytywanie opcji z getopt
-	while ((opt = getopt(argc, argv, "hdsf:")) != -1){
-    		switch (opt){
-	      		case 'f':
-				// Dodawanie nowego pliku do komresji
-        			if (add_word(files, optarg) == 1){
-					fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]);
-					return 3;
-				}
-        			break;
-	      		case 'd':
-				// Opcja dekompresji pliku
-				decode_file = 1;
-				break;
-	      		case 's':
-				// Opcja wyświetlenia rozmiaru pliku przed i po kompresji
-				show_file_size = 1;
-				break;
-	      		case 'h':
-				// Okno pomocy
-				help();
-				return 0;
-  	    		case '?':
-				help();
-				return 4;
+	while ((opt = getopt(argc, argv, "hdsf:")) != -1) {
+		switch (opt) {
+			case 'f':
+			// Dodawanie nowego pliku do komresji
+				if (add_word(files, optarg) == 1) {
+				fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]);
+				return 3;
+			}
+			break;
+
+			case 'd':
+			// Opcja dekompresji pliku
+			decode_file = 1;
+			break;
+
+			case 's':
+			// Opcja wyświetlenia rozmiaru pliku przed i po kompresji
+			show_file_size = 1;
+			break;
+
+			case 'h':
+			// Okno pomocy
+			help();
+			return 0;
+
+			case '?':
+			help();
+			return 4;
 		}
 	}
 
@@ -97,33 +104,30 @@ int main(int argc, char **argv){
 
 	// Iterowanie po plikach do skompresowania
 	for (j = 0; j < files->n; j++){	
-		// Otwieranie pliku
-		in = fopen(files->words[j], "rb");
-		if (in == NULL){
+		if ((in = fopen(files->words[j], "rb")) == NULL) {
 			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
 			return 1;
 		}
 		
-		// Zerowanie częstości byte'ów dla pliku
-		for (i = 0; i < BYTE_SIZE; i++)
+		for (i = 0; i < BYTE_SIZE; i++) {
 			freq[i] = 0;
+		}
 		
-		// Liczenie częstości znaków
-		while ((byte = fgetc(in)) != EOF)
+		while ((byte = fgetc(in)) != EOF) {
 			freq[byte]++;
+		}
 		
 		fclose(in);
 
 		// Tworzenie struktur węzłów
-		nodes = init_node_vec(8);
-		if (nodes == NULL){
+		if ((nodes = init_heap_min(DEFAULT_DATA_SIZE)) == NULL) {
 			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
-		for (i = 0; i < BYTE_SIZE; i++){
-			if(freq[i] != 0){
-				if (add_node(nodes, init_node(i, freq[i], NULL, NULL)) == 1){
+		for (i = 0; i < BYTE_SIZE; i++) {
+			if (freq[i] != 0) {
+				if (heap_min_insert(nodes, init_node(i, freq[i], NULL, NULL)) != 0){
 					fprintf(stderr, "%s: Błąd alokacji pamięci węzła: %s\n", argv[0], files->words[j]);
 					return 3;
 				}
@@ -131,21 +135,19 @@ int main(int argc, char **argv){
 		}
 		
 		// Dodawanie węzła ze znakiem końca pliku (-1)
-		if (add_node(nodes, init_node(-1, 1, NULL, NULL)) == 1){
+		if (heap_min_insert(nodes, init_node(-1, 1, NULL, NULL)) == 1){
 			fprintf(stderr, "%s: Błąd alokacji pamięci węzła końcowego: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
 		// Tworzenie drzewa
-		root = make_tree(nodes);
-		if (root == NULL){
+		if ((root = make_tree(nodes)) == NULL) {
 			fprintf(stderr, "%s: Błąd alokacji pamięci drzewa: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
 		// Czytanie kodów z drzewa
-		codes = init_node_vec(8);
-		if (codes == NULL){
+		if ((codes = init_node_vec(DEFAULT_DATA_SIZE)) == NULL) {
 			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów z kodami: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
@@ -266,7 +268,7 @@ int main(int argc, char **argv){
 		// Zwalnianie pamięci by następny plik mógł nadpisać
 		free(file_name);
 		free(out_file_name);
-		free_node_vec(nodes);
+		heap_min_free(nodes);
 		
 		for (i = 0; i < codes->n; i++)
 			free_node(codes->nodes[i]);

@@ -17,8 +17,8 @@ char *find_code(int sign, node_vec_t *codes){
  * Czytamy kolejne bajty pliku, znajdujemy odpowiednie kody a następnie ładujemy je do pliku wyjściowego.
  * Na sam koniec ładujemy znak końca pliku (-1) i uzupełniamy zerami do pełnego bajta jeśli trzeba. */
 void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes){
-	char byte = 0;			// Wartość bajta który będzie zapisywany do pliku wyjściowego.
-	int shift = 0;			// Przesunięcie bitowe zmiennej byte.
+	char byte = 0;		// Wartość bajta który będzie zapisywany do pliku wyjściowego.
+	int shift = 0;		// Przesunięcie bitowe zmiennej byte.
 	char* code;			// Wskaźnik na kod znaku
 	int i, c;			// Zmienne do iterowania
 

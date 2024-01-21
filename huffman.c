@@ -1,82 +1,76 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "node_vector.h"
+#include "heap_min.h"
 #include "node.h"
 
-// Funkcja porównuje dwa węzły pod względem częstości występowania znaku.
-int node_cmp(const void *a, const void *b){
-	return (*(node_t**)a)->freq - (*(node_t**)b)->freq;
-}
-
-// Funkcja tworzy strukturę drzewa Huffmana i na koniec zwraca węzeł będący korzeniem tego drzewa.
-node_t * make_tree(node_vec_t *nodes){
-	int i;
-	node_t *temp;
-
-	qsort(nodes->nodes, nodes->n, sizeof(node_t*), node_cmp);
+// Creates Huffman tree and return its root
+node_t * make_tree(heap_min_t *heap_min) {
+	node_t *node_a;
+	node_t *node_b;
+	node_t *new_node;
 	
-	while (nodes->n > 1){
-		// Łączenie dwóch pierweszych węzłów ze sobą
-		nodes->nodes[0] = init_node(0, nodes->nodes[0]->freq + nodes->nodes[1]->freq, nodes->nodes[0], nodes->nodes[1]);
+	// Connect nodes until there's only one
+	while (heap_min->n > 1) {
+		node_a = heap_min_remove(heap_min);
+		node_b = heap_min_remove(heap_min);
 
-		if (nodes->nodes[0] == NULL)
-			// Błąd alokacji pamięci
+		if ((new_node = init_node(0, node_a->freq + node_b->freq, node_a, node_b)) == NULL) {
+			// Memory alloc error
 			return NULL;
+		}
 
-		// Przesywanie reszty węzłów by wypełnić lukę
-		for (i = 1; i < nodes->n - 1; i++)
-            		nodes->nodes[i] = nodes->nodes[i + 1];
-		
-		nodes->n--;
-		
-		// Przesuwanie stworzonego węzła by wektor był dalej posortowany
-		for (i = 0; i < nodes->n - 1 && (nodes->nodes[i])->freq > (nodes->nodes[i + 1])->freq; i++){
-            		temp = nodes->nodes[i];
-			nodes->nodes[i] = nodes->nodes[i + 1];
-			nodes->nodes[i + 1] = temp;
+		if ((heap_min_insert(heap_min, new_node)) != 0) {
+			// Memory alloc error
+			free(new_node);
+			return NULL;
 		}
 	}
 
-	return nodes->nodes[0];
+	// The last node is the root 
+	return heap_min_remove(heap_min);
 }
 
-
-// Funckja porusza się po dzrewie Huffmana i zapisuje znaki i ich kody do wektora węzłów
-void read_codes(node_t *head, node_vec_t *codes, char *temp_code){
+void read_codes(node_t *root, node_vec_t *codes, char *temp_code) {
 	char *tmp;
 
-	if (head->left != NULL){
-		strcat(temp_code, "0\0");
-		read_codes(head->left, codes, temp_code);
+	if (root == NULL) {
+		return;
 	}
 
-	if (head->right != NULL){
-		strcat(temp_code, "1\0");
-		read_codes(head->right, codes, temp_code);
+	if (root->left != NULL) {
+		// The left child is not a leaf, go deeper
+		strcat(temp_code, "0");
+		read_codes(root->left, codes, temp_code);
+	}
+	if (root->right != NULL) {
+		// The right child is not a leaf, go deeper
+		strcat(temp_code, "1");
+		read_codes(root->right, codes, temp_code);
 	}
 
-	if (head->left == NULL && head->right == NULL){
-		/* Alokowanie pamięci dla ciągu znaków przechowującego kod
-		 * Pamięc zostanie zwolniona przy wywołaniu funkcji zwalniającej cały węzęł. */
-		tmp = malloc(sizeof(char) * (strlen(temp_code) + 1));
+	// This node is a leaf, let's safe its code
+	if (root->left == NULL && root->right == NULL) {
+		if ((tmp = malloc(sizeof(char) * (strlen(temp_code) + 1))) == NULL) {
+			return;
+		}
+
 		strcpy(tmp, temp_code);
-		add_node(codes, init_node(head->sign, head->freq, NULL, NULL));
+		add_node(codes, init_node(root->sign, root->freq, NULL, NULL));
 		codes->nodes[codes->n - 1]->code = tmp;
 	}	
 
+	// Remove last code's bit when returning to previous node
 	if (strlen(temp_code) > 0)
 		temp_code[strlen(temp_code) - 1] = '\0';
 }
 
+void free_tree(node_t *root) {
+	if (root == NULL) {
+		return;
+	}
 
-// Zwalnia węzły należące do drzewa Huffmana
-void free_tree(node_t *root){	
-	if (root->left != NULL)
-		free_tree(root->left);		
-
-	if (root->right != NULL)
-		free_tree(root->right);
-
+	free_tree(root->left);		
+	free_tree(root->right);
 	free_node(root);
 }
