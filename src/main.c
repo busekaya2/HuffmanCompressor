@@ -38,7 +38,6 @@ int main(int argc, char **argv) {
 
 	// Reading files for compression
 	FILE *in; 								// Input file
-	int freq[BYTE_SIZE]; 					// Frequency of byte occurrences in the file
 	int byte; 								// Stores values <0; 255>
 
 	// Creating the tree
@@ -99,16 +98,6 @@ int main(int argc, char **argv) {
 			fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
 			return 1;
 		}
-		
-		for (i = 0; i < BYTE_SIZE; i++) {
-			freq[i] = 0;
-		}
-		
-		while ((byte = fgetc(in)) != EOF) {
-			freq[byte]++;
-		}
-		
-		fclose(in);
 
 		// Initialize node heap
 		if ((nodes = init_heap_min(DEFAULT_DATA_SIZE)) == NULL) {
@@ -116,14 +105,13 @@ int main(int argc, char **argv) {
 			return 3;
 		}
 
-		for (i = 0; i < BYTE_SIZE; i++) {
-			if (freq[i] != 0) {
-				if (heap_min_insert(nodes, init_node(i, freq[i], NULL, NULL)) != 0) {
-					fprintf(stderr, "%s: Error allocating node: %s\n", argv[0], files->words[j]);
-					return 3;
-				}
-			}
+		// Count byte frequency and create nodes
+		if (build_heap_content(in, nodes) != 0) {
+			fprintf(stderr, "%s: Error allocating node: %s\n", argv[0], files->words[j]);
+			return 3;
 		}
+
+		fclose(in);
 		
 		// Add file termination node (-1)
 		if (heap_min_insert(nodes, init_node(-1, 1, NULL, NULL)) == 1) {
@@ -198,7 +186,7 @@ int main(int argc, char **argv) {
 		}
 
 		out_file = fopen(out_file_name, "wb");
-		if (out_file == NULL){
+		if (out_file == NULL) {
 			fprintf(stderr, "%s: No privilages to: %s\n", argv[0], files->words[j]);
 			return 2;
 		}
@@ -206,7 +194,7 @@ int main(int argc, char **argv) {
 		encode(in, out_file, file_ext, codes);
 	
 		// Show filesize before and after compression (invoke option)
-		if (show_file_size){
+		if (show_file_size) {
 			printf("%s\n", files->words[j]);
 			printf("\tSize before: %ld [KB]\n", get_file_size(in));
 			printf("\tSize after: %ld [KB]\n", get_file_size(out_file));
@@ -216,13 +204,15 @@ int main(int argc, char **argv) {
 		fclose(out_file);
 
 		// Decode file (invoke option)
-		if (decode_file){
-			if (file_ext != NULL)
+		if (decode_file) {
+			if (file_ext != NULL) {
 				out_decoded_name = malloc(sizeof(char) * (file_name_n + 10 + strlen(file_ext)));
-			else
+			}
+			else {
 				out_decoded_name = malloc(sizeof(char) * (file_name_n + 9));
-			
-			if (out_decoded_name == NULL){
+			}
+
+			if (out_decoded_name == NULL) {
 				fprintf(stderr, "%s: Error allocating decompressed output filename string: %s\n", argv[0], files->words[j]);
 				return 3;
 			}
@@ -230,20 +220,20 @@ int main(int argc, char **argv) {
 			strcpy(out_decoded_name, file_name);
 			strcat(out_decoded_name, "_decoded");
 			
-			if (file_ext != NULL){
+			if (file_ext != NULL) {
 				strcat(out_decoded_name, ".");
 				strcat(out_decoded_name, file_ext);
 			}
 			strcat(out_decoded_name, "\0");
 		
 			out_decoded = fopen(out_decoded_name, "wb");
-			if (out_decoded == NULL){
+			if (out_decoded == NULL) {
 				fprintf(stderr, "%s: No privilages to: %s\n", argv[0], files->words[j]);
 				return 2;
 			}
 
 			out_file = fopen(out_file_name, "rb");
-			if (out_file == NULL){
+			if (out_file == NULL) {
 				fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
 				return 1;
 			}
@@ -261,8 +251,9 @@ int main(int argc, char **argv) {
 		free(out_file_name);
 		heap_min_free(nodes);
 		
-		for (i = 0; i < codes->n; i++)
+		for (i = 0; i < codes->n; i++) {
 			free_node(codes->nodes[i]);
+		}
 		free_node_vec(codes);
 		
 		free_tree(root);

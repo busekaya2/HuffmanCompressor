@@ -8,10 +8,15 @@ test: compressor.exe
 	../build/compressor.exe -f ../test/simple.txt -d
 
 clean:
-	rm ./build/compressor.exe
-	rm ./build/debug.exe
-	rm ./build/.exe
+	rm ../build/compressor.exe
+	rm ../build/debug.exe
+	rm ../build/.exe
 
-	rm ./test/simple.txt
-	rm ./test/LoremIpsum.txt
-	rm ./test/fretka_w_wannie.jpg
+	rm ../test/simple.huf
+	rm ../test/simple_decoded.txt
+	rm ../test/one_unique_byte.huf
+	rm ../test/one_unique_byte_decoded.txt
+	rm ../test/LoremIpsum.huf
+	rm ../test/LoremIpsum_decoded.txt
+	rm ../test/fretka_w_wannie.huf
+	rm ../test/fretka_w_wannie_decoded.txt

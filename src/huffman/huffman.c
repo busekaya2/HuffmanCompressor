@@ -4,7 +4,43 @@
 #include "../node/node.h"
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
+
+int build_heap_content(FILE *input, heap_min_t *nodes) {
+	int i;
+	int byte;
+	int *freq = malloc(sizeof(int) * BYTE_SIZE); 
+	
+	if (freq == NULL) {
+		return 1;
+	}
+
+	for (i = 0; i < BYTE_SIZE; i++) {
+		freq[i] = 0;
+	}
+	
+	while ((byte = fgetc(input)) != EOF) {
+		freq[byte]++;
+
+		if (freq[byte] >= INT_MAX) {
+            for (i = 0; i < BYTE_SIZE; i++) {
+				freq[i] /= 2;
+			}
+		}
+	}
+
+	for (i = 0; i < BYTE_SIZE; i++) {
+		if (freq[i] != 0) {
+			if (heap_min_insert(nodes, init_node(i, freq[i], NULL, NULL)) != 0) {
+				free(freq);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
 
 node_t * make_tree(heap_min_t *heap_min) {
 	node_t *node_a;
