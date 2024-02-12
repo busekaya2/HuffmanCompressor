@@ -2,9 +2,6 @@
 #define NODE_H
 
 
-/* Struktura odpowiada za przechowywanie węzła.
- * Posiada informacje o znaku, częstości, kodzie, prawym i lewym wskażniku na kolejny węzeł. */
-
 typedef struct Node{
 	int sign;
 	int freq;

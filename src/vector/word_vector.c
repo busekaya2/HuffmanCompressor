@@ -1,17 +1,21 @@
 #include "word_vector.h"
 #include <stdlib.h>
 
+
+/* Structure of a dynamic vector holding pointers to strings.
+ * NOTE - The vector is not responsible for freeing the memory of the contents, it must be done manually */
+
 word_vec_t * init_word_vec(int capacity){
 	word_vec_t *new = malloc(sizeof(word_vec_t));
 	
 	if (new == NULL)
-		// Błąd alokacji pamięci
+		// Memory alloc error
 		return NULL;
 	
 	new->words = malloc(sizeof(char*) * capacity);
 	
 	if (new->words == NULL)
-		// Błąd alokacji pamięci
+		// Memory alloc error
 		return NULL;
 
 	new->capacity = capacity;
@@ -25,7 +29,7 @@ int double_word_capacity(word_vec_t* vec){
 	vec->words = realloc(vec->words, sizeof(char*) * vec->capacity);
 	
 	if (vec->words == NULL)
-		// Błąd alokacji pamięci
+		// Memory alloc error
 		return 1;
 
 	return 0;
@@ -34,7 +38,7 @@ int double_word_capacity(word_vec_t* vec){
 int add_word(word_vec_t *vec, char *word){
 	if (vec->n >= vec->capacity)
 		if (double_word_capacity(vec) == 1)
-			// Błąd alokacji pamięci
+			// Memory alloc error
 			return 1;
 	
 	vec->words[vec->n++] = word;
@@ -42,8 +46,6 @@ int add_word(word_vec_t *vec, char *word){
 	return 0;
 }
 
-/* UWAGA - Funkcja nie zwalnia zawartości wektora, jedynie strukturę.
- * Zawartość należy zwolnić ręcznie */
 void free_word_vec(word_vec_t *vec){
 	free(vec->words);
 	free(vec);

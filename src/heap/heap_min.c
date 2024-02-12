@@ -1,7 +1,8 @@
+#include "heap_min.h"
+#include "../node/node.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "heap_min.h"
-#include "node.h"
+
 
 heap_min_t *init_heap_min(int initial_size) {
     heap_min_t *heap;
@@ -10,6 +11,7 @@ heap_min_t *init_heap_min(int initial_size) {
         // Heap memory alloc error
         return NULL;
     }
+    
     if ((heap->elements = malloc(sizeof(node_t*) * initial_size)) == NULL) {
         // Heap node array memory alloc error
         free(heap);

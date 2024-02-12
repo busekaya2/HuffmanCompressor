@@ -1,10 +1,11 @@
+#include "huffman.h"
+#include "../vector/node_vector.h"
+#include "../heap/heap_min.h"
+#include "../node/node.h"
 #include <stdlib.h>
 #include <string.h>
-#include "node_vector.h"
-#include "heap_min.h"
-#include "node.h"
 
-// Creates Huffman tree and return its root
+
 node_t * make_tree(heap_min_t *heap_min) {
 	node_t *node_a;
 	node_t *node_b;
@@ -49,7 +50,7 @@ void read_codes(node_t *root, node_vec_t *codes, char *temp_code) {
 		read_codes(root->right, codes, temp_code);
 	}
 
-	// This node is a leaf, let's safe its code
+	// This node is a leaf, let's save its code
 	if (root->left == NULL && root->right == NULL) {
 		if ((tmp = malloc(sizeof(char) * (strlen(temp_code) + 1))) == NULL) {
 			return;

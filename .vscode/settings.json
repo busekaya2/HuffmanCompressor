@@ -4,6 +4,12 @@
         "node_vector.h": "c",
         "stdlib.h": "c",
         "stdio.h": "c",
-        "node.h": "c"
+        "node.h": "c",
+        "string.h": "c",
+        "decode.h": "c",
+        "huffman.h": "c",
+        "encode.h": "c",
+        "bit_operations.h": "c",
+        "word_vector.h": "c"
     }
 }

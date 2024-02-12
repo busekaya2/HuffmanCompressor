@@ -2,12 +2,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include "word_vector.h"
-#include "node_vector.h"
-#include "huffman.h"
-#include "encode.h"
-#include "decode.h"
-#include "heap_min.h"
+#include "./vector/word_vector.h"
+#include "./vector/node_vector.h"
+#include "./huffman/huffman.h"
+#include "./huffman/encode.h"
+#include "./huffman/decode.h"
+#include "./heap/heap_min.h"
 
 #define BYTE_SIZE 256
 #define DEFAULT_DATA_SIZE 8
