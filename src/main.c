@@ -8,104 +8,95 @@
 #include "./huffman/encode.h"
 #include "./huffman/decode.h"
 #include "./heap/heap_min.h"
+#include "./utils/file_operations.h"
+
 
 #define BYTE_SIZE 256
 #define DEFAULT_DATA_SIZE 8
 
-
-void help(){
-	printf("Program kompresuje pliki z wykorzystaniem algorytmu Huffmana.\n");
-	printf("Przy kompresji tworzony jest plik z roszerzeniem .huf zawierający skompresowane dane oraz klucz do ich dekompresji.\n\n");
-	printf("Składnia: ./compressor.exe [-f PLIK] [-s] [-h] [-d]\n\n");
-	printf("Opcje:\n");
-	printf("\t-f\tŚcieżka pliku, który ma zostać skompresowany\n");
-	printf("\t-s\tWyświetlenie rozmiaru pliku przed i po kompresji\n");
-	printf("\t-h\tWyświetlenie okna pomocy (help)\n");
-	printf("\t-d\tNatychmiast dekompresuje skompresowany plik w celu sprawdzenia poprawności kompresji\n\n");
-	printf("Program może kompresować naraz kilka plików. Należy wówczas przed ścieżką każdego pliku wstawić opcję -f.\n");
-	printf("\tPrzykład: ./compressor.exe -f file1 -f file2 -f file3\n");
-}
-
-// Zwraca rozmiar pliku w KB
-long int get_file_size(FILE *f){
-	fseek(f, 0L, SEEK_END);
-	long int file_size = ftell(f);
-
-	return file_size / 1024;
+void help() {
+	printf("The program compresses files using the Huffman algorithm.\n");
+	printf("During compression, a file with the extension .huf is created, containing the compressed data and the key for its decompression.\n\n");
+	printf("Syntax: ./compressor.exe [-f FILE] [-s] [-h] [-d]\n\n");
+	printf("Options:\n");
+	printf("\t-f\tPath of the file to be compressed\n");
+	printf("\t-s\tDisplay file size before and after compression\n");
+	printf("\t-h\tDisplay help window\n");
+	printf("\t-d\tImmediately decompress the compressed file to check the correctness of the compression\n\n");
+	printf("The program can compress several files at once. In this case, the -f option should be placed before the path of each file.\n");
+	printf("\tExample: ./compressor.exe -f file1 -f file2 -f file3\n");
 }
 
 int main(int argc, char **argv) {
-	int i, j;								// Zmienne do iterowania
+	int i, j;								// Variables for iterating
 
-	// Zmienne getopt
-	char opt;								// Zmienna określająca opcję getopt
-	word_vec_t *files = init_word_vec(2); 	// Wektor przechowuje nazwy plików do skompresowania
-	int show_file_size = 0;					// Opcja wyświetlenia rozmiaru przed i po komresji
-	int decode_file = 0;					// Opcja dekompresji skompresowanego pliku
+	// getopt variables
+	char opt;								// Variable determining getopt option
+	word_vec_t *files = init_word_vec(2); 	// Vector storing names of files to be compressed
+	int show_file_size = 0;					// Option to display size before and after compression
+	int decode_file = 0;					// Option to decompress compressed file
 
-	// Czytanie plików do kompresji
-	FILE *in; 								// Plik wejściowy
-	int freq[BYTE_SIZE]; 					// Częstość występowania bajtów w pliku
-	int byte; 								// Przechowuje wartości <0; 255>
+	// Reading files for compression
+	FILE *in; 								// Input file
+	int freq[BYTE_SIZE]; 					// Frequency of byte occurrences in the file
+	int byte; 								// Stores values <0; 255>
 
-	// Tworzenie drzewa
-	heap_min_t *nodes; 						// Wektor węzłów (bez kodów)
-	node_t *root; 							// Korzeń drzewa
+	// Creating the tree
+	heap_min_t *nodes; 						// Vector of nodes (without codes)
+	node_t *root; 							// Root of the tree
 
-	// Kodowanie do pliku
-	node_vec_t *codes; 						// Przechowuje węzły z kodami
-	char temp_code[BYTE_SIZE]; 				// Tymczasowy ciąg znaków potrzebny do generowania kodów
-	char *file_ext; 						// Rozszerzenie originalnego pliku
-	int file_name_n;						// Długość nazwy oryginalnego pliku bez rozszerzenia
-	char *file_name;						// Nazwa oryginalnego pliku bez rozszerzenia
-	char *out_file_name;					// Nazwa skompresowanego pliku wyjściowego
-	char *out_decoded_name;					// Nazwa zdekompresowanego pliku (opcja wywołania)
-	FILE *out_file;							// Wyjściowy skompresowany plik
-	FILE *out_decoded;						// Wyjściowy plik po wykonaniu dekompresji skompresowanego pliku (opcja wywyołania)
+	// Encoding to file
+	node_vec_t *codes; 						// Stores nodes with codes
+	char temp_code[BYTE_SIZE]; 				// Temporary character string needed for generating codes
+	char *file_ext; 						// Original file extension
+	int file_name_n;						// Length of the original file name without the extension
+	char *file_name;						// Original file name without the extension
+	char *out_file_name;					// Name of the compressed output file
+	char *out_decoded_name;					// Name of the decompressed file (optional execution)
+	FILE *out_file;							// Output compressed file
+	FILE *out_decoded;						// Output file after decompressing the compressed file (optional execution)
 	
-	// Wczytywanie opcji z getopt
+	// Handle invoke options using getopt
 	while ((opt = getopt(argc, argv, "hdsf:")) != -1) {
 		switch (opt) {
 			case 'f':
-			// Dodawanie nowego pliku do komresji
+				// Add path of file to vector 
 				if (add_word(files, optarg) == 1) {
-				fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]);
-				return 3;
-			}
+					fprintf(stderr, "%s: Filename memory alloc error: %s\n", argv[0], files->words[j]);
+					return 3;
+				}
 			break;
 
 			case 'd':
-			// Opcja dekompresji pliku
-			decode_file = 1;
+				// Decompress option
+				decode_file = 1;
 			break;
 
 			case 's':
-			// Opcja wyświetlenia rozmiaru pliku przed i po kompresji
-			show_file_size = 1;
+				// Show filesize before and after compression
+				show_file_size = 1;
 			break;
 
 			case 'h':
-			// Okno pomocy
-			help();
+				help();
 			return 0;
 
 			case '?':
-			help();
+				help();
 			return 4;
 		}
 	}
 
-	if (files->n < 1)
-	{
-		fprintf(stderr, "%s: Nie podano żadnego pliku.\n\n", argv[0]);
+	if (files->n < 1) {
+		fprintf(stderr, "%s: No file given.\n\n", argv[0]);
 		help();
 		return 1;
 	}
 
-	// Iterowanie po plikach do skompresowania
+	// Compressing each given file
 	for (j = 0; j < files->n; j++){	
 		if ((in = fopen(files->words[j], "rb")) == NULL) {
-			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
 			return 1;
 		}
 		
@@ -119,69 +110,69 @@ int main(int argc, char **argv) {
 		
 		fclose(in);
 
-		// Tworzenie struktur węzłów
+		// Initialize node heap
 		if ((nodes = init_heap_min(DEFAULT_DATA_SIZE)) == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error allocating heap: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
 		for (i = 0; i < BYTE_SIZE; i++) {
 			if (freq[i] != 0) {
-				if (heap_min_insert(nodes, init_node(i, freq[i], NULL, NULL)) != 0){
-					fprintf(stderr, "%s: Błąd alokacji pamięci węzła: %s\n", argv[0], files->words[j]);
+				if (heap_min_insert(nodes, init_node(i, freq[i], NULL, NULL)) != 0) {
+					fprintf(stderr, "%s: Error allocating node: %s\n", argv[0], files->words[j]);
 					return 3;
 				}
 			}
 		}
 		
-		// Dodawanie węzła ze znakiem końca pliku (-1)
-		if (heap_min_insert(nodes, init_node(-1, 1, NULL, NULL)) == 1){
-			fprintf(stderr, "%s: Błąd alokacji pamięci węzła końcowego: %s\n", argv[0], files->words[j]);
+		// Add file termination node (-1)
+		if (heap_min_insert(nodes, init_node(-1, 1, NULL, NULL)) == 1) {
+			fprintf(stderr, "%s: Error allocating file termination node: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
-		// Tworzenie drzewa
+		// Create Huffman tree
 		if ((root = make_tree(nodes)) == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci drzewa: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error allocating huffman tree: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
-		// Czytanie kodów z drzewa
+		// Read codes from tree
 		if ((codes = init_node_vec(DEFAULT_DATA_SIZE)) == NULL) {
-			fprintf(stderr, "%s: Błąd alokacji pamięci struktury węzłów z kodami: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error allocating codes vector: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
 		temp_code[0] = '\0';
 		read_codes(root, codes, temp_code);
 
-		for (i = 0; i < codes->n; i++){
-			if (codes->nodes[i]->code == NULL){
-				fprintf(stderr, "%s: Błąd alokacji pamięci kodu: %s\n", argv[0], files->words[j]);
+		for (i = 0; i < codes->n; i++) {
+			if (codes->nodes[i]->code == NULL) {
+				fprintf(stderr, "%s: Error allocating code string: %s\n", argv[0], files->words[j]);
 				return 3;
 			}
 		}
 
-		// Odczytywanie rozszerzenia oryginalnego pliku
+		// Read original extension
 		file_ext = strrchr(files->words[j], '.');
 		if (file_ext != NULL) {
 			file_ext++;
-			if ((file_ext - 1) - strrchr(files->words[j], '/') < 0)
-				// Sprawdzamy czy znaleziona kropka nalezy do samej nazwy pliku a nie ścieżki
+			if ((file_ext - 1) - strrchr(files->words[j], '/') < 0) {
 				file_ext = NULL;
+			}
 		}
 			
-		// Liczenie długości nazwy originalnego pliku (bez rozszerzenia)
+		// Count original filename length (without extension)
 		file_name_n;
 		if (file_ext != NULL)
 			file_name_n = strlen(files->words[j]) - strlen(file_ext) - 1;
 		else
 			file_name_n = strlen(files->words[j]);
 		
-		// Zapisywanie nazwy pliku bez rozszerzenia
+		// Save filename (without extension)
 		file_name = malloc(sizeof(char) * (file_name_n + 1));
 		if (file_name == NULL){
-			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error allocating filename string: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 
@@ -189,42 +180,42 @@ int main(int argc, char **argv) {
 			file_name[i] = files->words[j][i];
 		file_name[i] = '\0';
 		
-		// Tworzenie nazw plików wyjściowych
+		// Create output filenames
 		out_file_name = malloc(sizeof(char) * (file_name_n + 5));
 		if (out_file_name == NULL){
-			fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error allocating output filename string: %s\n", argv[0], files->words[j]);
 			return 3;
 		}
 		
 		strcpy(out_file_name, file_name);
 		strcat(out_file_name, ".huf\0");
 				
-		// Kodowanie pliku
+		// Encode file
 		in = fopen(files->words[j], "rb");
 		if (in == NULL){
-			fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
 			return 1;
 		}
 
 		out_file = fopen(out_file_name, "wb");
 		if (out_file == NULL){
-			fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]);
+			fprintf(stderr, "%s: No privilages to: %s\n", argv[0], files->words[j]);
 			return 2;
 		}
 
 		encode(in, out_file, file_ext, codes);
 	
-		// Wyświetlanie rozmiatu pliku przed i po kompresji (opcja wywołania)
+		// Show filesize before and after compression (invoke option)
 		if (show_file_size){
 			printf("%s\n", files->words[j]);
-			printf("\tRozmiar przed kompresją: %ld [KB]\n", get_file_size(in));
-			printf("\tRozmiar po kompresji: %ld [KB]\n", get_file_size(out_file));
+			printf("\tSize before: %ld [KB]\n", get_file_size(in));
+			printf("\tSize after: %ld [KB]\n", get_file_size(out_file));
 		}
 
 		fclose(in);
 		fclose(out_file);
 
-		// Dekodowanie pliku (opcja wywołania)
+		// Decode file (invoke option)
 		if (decode_file){
 			if (file_ext != NULL)
 				out_decoded_name = malloc(sizeof(char) * (file_name_n + 10 + strlen(file_ext)));
@@ -232,7 +223,7 @@ int main(int argc, char **argv) {
 				out_decoded_name = malloc(sizeof(char) * (file_name_n + 9));
 			
 			if (out_decoded_name == NULL){
-				fprintf(stderr, "%s: Błąd alokacji pamięci nazwy pliku wyjściowego: %s\n", argv[0], files->words[j]);
+				fprintf(stderr, "%s: Error allocating decompressed output filename string: %s\n", argv[0], files->words[j]);
 				return 3;
 			}
 
@@ -247,13 +238,13 @@ int main(int argc, char **argv) {
 		
 			out_decoded = fopen(out_decoded_name, "wb");
 			if (out_decoded == NULL){
-				fprintf(stderr, "%s: Brak uprawnień do pliku: %s\n", argv[0], files->words[j]);
+				fprintf(stderr, "%s: No privilages to: %s\n", argv[0], files->words[j]);
 				return 2;
 			}
 
 			out_file = fopen(out_file_name, "rb");
 			if (out_file == NULL){
-				fprintf(stderr, "%s: Błąd odczytu pliku: %s\n", argv[0], files->words[j]);
+				fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
 				return 1;
 			}
 
@@ -265,7 +256,7 @@ int main(int argc, char **argv) {
 			fclose(out_file);
 		}
 
-		// Zwalnianie pamięci by następny plik mógł nadpisać
+		// Free memory for the next file
 		free(file_name);
 		free(out_file_name);
 		heap_min_free(nodes);

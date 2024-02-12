@@ -18,12 +18,12 @@ int decode(FILE *in, FILE *out, node_t *root) {
 		bin = byte_to_binary(c);
 		
 		if (bin == NULL) {
-			// Błąd alokacji pamięci
+			// Memory alloc error
 			return 1;
 		}
 
 		for (i = 0; i < strlen(bin); i++) {
-			// Idziemy w głąb drzewa
+			// Go deeper
 			if (bin[i] == '0') {
 				head = head->left;
 			}
@@ -34,12 +34,12 @@ int decode(FILE *in, FILE *out, node_t *root) {
 
 			if (head->left == NULL && head->right == NULL) {
 				if (head->sign == -1) {
-					// Znaleziono znak końca
+					// File terminator found
 					free(bin);
 					return 0;
 				}
 
-				// Zapisywanie bajta do pliku i powrót do korzenia
+				// Save byte to file and go back to the tree root 
 				fwrite(&(head->sign), 1, sizeof(char), out);
 				head = root;
 		
@@ -48,6 +48,6 @@ int decode(FILE *in, FILE *out, node_t *root) {
 		free(bin);
 	}
 
-	// Nie znaleziono znaku końca więc kody są nieprawidłowe
+	// File terminator not found - broken file format
 	return 2;
 }

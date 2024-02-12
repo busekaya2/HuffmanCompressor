@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 
+// Converts byte(char) to binary string
 char *byte_to_binary(char byte) {
 	char* binary = (char*) malloc(9 * sizeof(char)); // 8 bits + '\0'
 	if (binary == NULL) {

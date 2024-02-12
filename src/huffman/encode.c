@@ -17,13 +17,12 @@ char *find_code(int sign, node_vec_t *codes) {
 }
 
 void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes) {
-	char byte = 0;		// Wartość bajta który będzie zapisywany do pliku wyjściowego.
-	int shift = 0;		// Przesunięcie bitowe zmiennej byte.
-	char* code;			// Wskaźnik na kod znaku
-	int i, c;			// Zmienne do iterowania
+	char byte = 0;
+	int shift = 0;
+	char* code;	
+	int i, c;	
 
-	/* Zapisywanie rozszerzenia oryginalnego pliku jako pierwsza linia.
-	 * Pierwsza linia pusta jeśli brak rozszerzenia (sam znak '\n')*/
+	// Encoding file extension
 	if (file_ext != NULL) {
 		fprintf(out_file, "%s\n", file_ext);
 	}
@@ -31,36 +30,31 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes) {
 		fprintf(out_file, "\n");
 	}
 
-	// Zapisywanie znaków i kodów do pliku.
+	// Encoding dictionary
 	for (i = 0; i < codes->n; i++) {
 		fprintf(out_file, "%d %s\n", codes->nodes[i]->sign, codes->nodes[i]->code);
 	}
 
-	// Znak '\0' mówiący o końcu części słownikowej
+	// Encoding dictionary terminator: '\0'
 	fwrite(&byte, 1, sizeof(byte), out_file);
 
-	// Ładowanie kodów znaków do pliku
+	// Encoding data
 	while ((c = getc(in)) != EOF) {
-		// Szukamy kodu znaku
 		code = find_code(c, codes);
 
-		// Zapisujemy bit po bicie do pliku wyjściowego
 		for (i = 0; i < strlen(code); i++) {
 			if (shift > 7){
-				/* Jeśli przesunięto już o 8 bitów to zapisujemy do pliku.
-				 * Zerujemy bajt */
 				fwrite(&byte, 1, sizeof(byte), out_file);
 				byte = 0;
 				shift = 0;
 			}
 
-			// Zapisywanie bitu do bajta
 			byte |= ((code[i] - '0') << (7 - shift));
 			shift++;
 		}
 	}
 
-	//  Ładowanie znaku końca (-1) do pliku
+	//  Encoding file terminator: -1 code
 	code = find_code(-1, codes);		
 	for (i = 0; i < strlen(code); i++) {
 		if (shift > 7){
@@ -72,7 +66,7 @@ void encode(FILE *in, FILE *out_file, char* file_ext, node_vec_t *codes) {
 		shift++;
 	}
 		
-	// Uzupełnianie zerami jeśli nie wypełniono całego bajta
+	// Fill last byte with zeros
 	while (shift < 8) {
 		byte |= (0 << (7 - shift));
 		shift++;

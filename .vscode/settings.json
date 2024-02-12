@@ -10,6 +10,7 @@
         "huffman.h": "c",
         "encode.h": "c",
         "bit_operations.h": "c",
-        "word_vector.h": "c"
+        "word_vector.h": "c",
+        "file_operations.h": "c"
     }
 }
