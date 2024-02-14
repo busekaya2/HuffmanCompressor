@@ -1,22 +1,18 @@
-compressor.exe: main.c ./node/node.c ./vector/node_vector.c ./vector/word_vector.c ./huffman/huffman.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c
-	gcc main.c ./node/node.c ./vector/node_vector.c ./vector/word_vector.c ./huffman/huffman.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c -o ../build/compressor.exe
+compressor.exe: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c
+	gcc main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c -o ../build/compressor.exe
 
-debug: main.c ./node/node.c ./vector/node_vector.c ./vector/word_vector.c ./huffman/huffman.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c
-	gcc -ggdb main.c ./node/node.c ./vector/node_vector.c ./vector/word_vector.c ./huffman/huffman.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c -o ../build/debug.exe
+debug: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c
+	gcc -ggdb main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c -o ../build/debug.exe
 
 test: compressor.exe
-	../build/compressor.exe -f ../test/simple.txt -d
+
+	../build/compressor.exe -f ../test/simple.txt -f ../test/one_unique_byte.txt -f ../test/empty.txt -f ../test/fretka_w_wannie.jpg
+	../build/compressor.exe -f ../test/simple.huf -f ../test/one_unique_byte.huf -f ../test/fretka_w_wannie.huf -d
 
 clean:
-	rm ../build/compressor.exe
 	rm ../build/debug.exe
-	rm ../build/.exe
 
 	rm ../test/simple.huf
-	rm ../test/simple_decoded.txt
 	rm ../test/one_unique_byte.huf
-	rm ../test/one_unique_byte_decoded.txt
 	rm ../test/LoremIpsum.huf
-	rm ../test/LoremIpsum_decoded.txt
 	rm ../test/fretka_w_wannie.huf
-	rm ../test/fretka_w_wannie_decoded.txt

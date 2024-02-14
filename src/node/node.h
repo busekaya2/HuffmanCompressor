@@ -3,15 +3,14 @@
 
 
 typedef struct Node{
-	int sign;
-	int freq;
-	char *code;
+	unsigned char sign;
+	unsigned int freq;
 	struct Node *left;
 	struct Node *right;
 } node_t;
 
-node_t *init_node(int, int, node_t *, node_t *);
-void free_node(node_t *);
+node_t *init_node(unsigned char, unsigned int, node_t*, node_t*);
+void free_node(node_t*);
 
 
 #endif

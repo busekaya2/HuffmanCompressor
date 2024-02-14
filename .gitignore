@@ -1,8 +1,2 @@
-./test/simple.huf
-./test/simple_decoded.txt
-./test/one_unique_byte.huf
-./test/one_unique_byte_decoded.txt
-./test/LoremIpsum.huf
-./test/LoremIpsum_decoded.txt
-./test/fretka_w_wannie.huf
-./test/fretka_w_wannie_decoded.txt
+.vscode/
+test/*.huf

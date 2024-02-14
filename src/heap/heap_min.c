@@ -1,5 +1,6 @@
 #include "heap_min.h"
 #include "../node/node.h"
+#include "../error_codes.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -29,10 +30,10 @@ int heap_min_double_size(heap_min_t *heap) {
     
     if ((heap->elements = realloc(heap->elements, sizeof(node_t*) * heap->capacity)) == NULL) {
         // Memory alloc error
-        return 1;
+        return ERROR_MEMORY_ALLOC;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 int heap_min_insert(heap_min_t *heap, node_t *element) {
@@ -41,14 +42,12 @@ int heap_min_insert(heap_min_t *heap, node_t *element) {
     int parent_id;
 
     if (element == NULL) {
-        // Invalid input node
-        return 2;
+        return ERROR_INVALID_PARAMETERS;
     }
 
     if (heap->n + 1 >= heap->capacity) {
         if (heap_min_double_size(heap) != 0) {
-            // Memory alloc error
-            return 1;
+            return ERROR_MEMORY_ALLOC;
         }
     }
 
@@ -63,7 +62,7 @@ int heap_min_insert(heap_min_t *heap, node_t *element) {
         parent_id = (head_id - 1) / 2;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 node_t *heap_min_remove(heap_min_t *heap) {
@@ -100,10 +99,12 @@ void heap_min_heapify(heap_min_t *heap, int head_id) {
     }
 }
 
-// Function won't free it's content, you have to do it manually
+// Function won't free heap's content, you have to do it manually
 void heap_min_free(heap_min_t* heap) {
-    free(heap->elements);
-    free(heap);
+    if (heap != NULL) {
+        free(heap->elements);
+        free(heap);
+    }
 }
 
 void heap_min_swap(heap_min_t *heap, int id_a, int id_b) {

@@ -11,6 +11,13 @@
         "encode.h": "c",
         "bit_operations.h": "c",
         "word_vector.h": "c",
-        "file_operations.h": "c"
+        "file_operations.h": "c",
+        "hashmap.h": "c",
+        "limits.h": "c",
+        "huffman_tree.h": "c",
+        "read_codes.h": "c",
+        "xstring": "c",
+        "error_codes.h": "c",
+        "path_handler.h": "c"
     }
 }

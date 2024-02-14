@@ -3,66 +3,115 @@
 #include <string.h>
 #include <stdlib.h>
 #include "./vector/word_vector.h"
-#include "./vector/node_vector.h"
-#include "./huffman/huffman.h"
+#include "./huffman/huffman_tree.h"
+#include "./huffman/read_codes.h"
 #include "./huffman/encode.h"
 #include "./huffman/decode.h"
 #include "./heap/heap_min.h"
 #include "./utils/file_operations.h"
+#include "./utils/path_handler.h"
+#include "./error_codes.h"
+#include "./constants.h"
 
-
-#define BYTE_SIZE 256
-#define DEFAULT_DATA_SIZE 8
 
 void help() {
 	printf("The program compresses files using the Huffman algorithm.\n");
-	printf("During compression, a file with the extension .huf is created, containing the compressed data and the key for its decompression.\n\n");
-	printf("Syntax: ./compressor.exe [-f FILE] [-s] [-h] [-d]\n\n");
+	printf("During compression/decompression, a new file is created, containing the compressed data and dictionary.\n\n");
+	printf("Syntax: ./compressor.exe [-f FILEPATH] [-d] [-s] [-h]\n\n");
 	printf("Options:\n");
-	printf("\t-f\tPath of the file to be compressed\n");
-	printf("\t-s\tDisplay file size before and after compression\n");
-	printf("\t-h\tDisplay help window\n");
-	printf("\t-d\tImmediately decompress the compressed file to check the correctness of the compression\n\n");
-	printf("The program can compress several files at once. In this case, the -f option should be placed before the path of each file.\n");
+	printf("\t-d\tSwitch to decopression (Program compresses by default)\n\n");
+	printf("\t-f\tPath of the file to be compressed/decompressed\n");
+	printf("\t-s\tDisplay file size before and after compression/decompression\n");
+	printf("\t-h\tDisplay help message\n");
+	printf("The program can compress/decompress several files at once. In this case, the -f option should be placed before the path of each file.\n");
 	printf("\tExample: ./compressor.exe -f file1 -f file2 -f file3\n");
 }
 
+void handle_error(int return_code, char *message, char *info) {
+	switch (return_code) {
+		case ERROR_MEMORY_ALLOC:
+			if (info != NULL) {
+				fprintf(stderr, "Memory allocation error while: %s for %s\n", message, info);
+			}
+			else {
+				fprintf(stderr, "Memory allocation error while: %s\n", message);
+			}
+		break;
+
+		case ERROR_INVALID_PARAMETERS:
+			if (info != NULL) {
+				fprintf(stderr, "Invalid parameter given: (%s) %s\n", info, message);
+			}
+			else {
+				fprintf(stderr, "Invalid parameter given: %s\n", message);
+			}
+		break;
+
+		// File specific error
+		case ERROR_READING_FILE:
+			fprintf(stderr, "Error reading file (%s): %s\n", info, message);
+		break;
+
+		case ERROR_WRITING_FILE:
+			fprintf(stderr, "Error writing to file (%s): %s\n", info, message);
+		break;
+
+		case ERROR_INVALID_FILE_FORMAT:
+			fprintf(stderr, "Invalid file format (%s): %s\n", message, info);
+		break;
+	}
+}
+
+void free_resources(heap_min_t *queue, word_vec_t *files, hashmap_t *codes_map, node_t *root, char *file_extension, char *filepath_no_extension, char *filepath_with_extension) {
+    heap_min_free(queue);
+    free_word_vec(files);
+    free_hashmap(codes_map);
+    free_tree(root);
+    free(file_extension);
+    free(filepath_no_extension);
+    free(filepath_with_extension);
+}
+
 int main(int argc, char **argv) {
-	int i, j;								// Variables for iterating
+	int file_id, i;							
+	int return_code;						
 
-	// getopt variables
-	char opt;								// Variable determining getopt option
-	word_vec_t *files = init_word_vec(2); 	// Vector storing names of files to be compressed
-	int show_file_size = 0;					// Option to display size before and after compression
-	int decode_file = 0;					// Option to decompress compressed file
+	// Getopt vars
+	char opt;								
+	int show_file_size = 0;					
+	int decode_file = 0;					
+	word_vec_t *files = NULL;						
 
-	// Reading files for compression
-	FILE *in; 								// Input file
-	int byte; 								// Stores values <0; 255>
+	// Filepath handling
+	char *filepath_no_extension = NULL;
+	char *filepath_with_extension = NULL;
 
-	// Creating the tree
-	heap_min_t *nodes; 						// Vector of nodes (without codes)
-	node_t *root; 							// Root of the tree
+	// Compression
+	heap_min_t *queue = NULL;						
+	node_t *root = NULL;							
+	hashmap_t *codes_map = NULL;
+	char *file_extension = NULL;				
 
-	// Encoding to file
-	node_vec_t *codes; 						// Stores nodes with codes
-	char temp_code[BYTE_SIZE]; 				// Temporary character string needed for generating codes
-	char *file_ext; 						// Original file extension
-	int file_name_n;						// Length of the original file name without the extension
-	char *file_name;						// Original file name without the extension
-	char *out_file_name;					// Name of the compressed output file
-	char *out_decoded_name;					// Name of the decompressed file (optional execution)
-	FILE *out_file;							// Output compressed file
-	FILE *out_decoded;						// Output file after decompressing the compressed file (optional execution)
+	// Decompression
+	FILE *input_file = NULL;	
+	FILE *output_file = NULL;
+	char *original_file_extension = NULL;
 	
+	if ((files = init_word_vec(INITIAL_VECTOR_SIZE)) == NULL) {
+		handle_error(ERROR_MEMORY_ALLOC, "creating filename vector", NULL);
+		free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+		return ERROR_MEMORY_ALLOC;
+	}
+
 	// Handle invoke options using getopt
 	while ((opt = getopt(argc, argv, "hdsf:")) != -1) {
 		switch (opt) {
 			case 'f':
 				// Add path of file to vector 
 				if (add_word(files, optarg) == 1) {
-					fprintf(stderr, "%s: Filename memory alloc error: %s\n", argv[0], files->words[j]);
-					return 3;
+					handle_error(ERROR_MEMORY_ALLOC, "adding filename to vector", NULL);
+					free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+					return ERROR_MEMORY_ALLOC;
 				}
 			break;
 
@@ -77,189 +126,164 @@ int main(int argc, char **argv) {
 			break;
 
 			case 'h':
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
 				help();
-			return 0;
+			return EXIT_SUCCESS;
 
 			case '?':
+				handle_error(ERROR_INVALID_PARAMETERS, "Unknown parameter", optarg);
 				help();
-			return 4;
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+			return ERROR_INVALID_PARAMETERS;
 		}
 	}
 
 	if (files->n < 1) {
-		fprintf(stderr, "%s: No file given.\n\n", argv[0]);
+		handle_error(ERROR_INVALID_PARAMETERS, "no file was given", NULL);
 		help();
-		return 1;
+		free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+		return ERROR_INVALID_PARAMETERS;
 	}
 
-	// Compressing each given file
-	for (j = 0; j < files->n; j++){	
-		if ((in = fopen(files->words[j], "rb")) == NULL) {
-			fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
-			return 1;
+	if ((queue = init_heap_min(INITIAL_QUEUE_SIZE)) == NULL) {
+		handle_error(ERROR_MEMORY_ALLOC, "initializing queue", NULL);
+		free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+		return ERROR_MEMORY_ALLOC;
+	}
+
+	// Handling each given file
+	for (file_id = 0; file_id < files->n; file_id++) {
+		if (is_file_empty(files->words[file_id]) == 1) {
+			handle_error(ERROR_INVALID_PARAMETERS, "given file is empty", files->words[file_id]);
+			continue;
 		}
 
-		// Initialize node heap
-		if ((nodes = init_heap_min(DEFAULT_DATA_SIZE)) == NULL) {
-			fprintf(stderr, "%s: Error allocating heap: %s\n", argv[0], files->words[j]);
-			return 3;
-		}
+		if (!decode_file) {
+			// We're compressing
 
-		// Count byte frequency and create nodes
-		if (build_heap_content(in, nodes) != 0) {
-			fprintf(stderr, "%s: Error allocating node: %s\n", argv[0], files->words[j]);
-			return 3;
-		}
-
-		fclose(in);
-		
-		// Add file termination node (-1)
-		if (heap_min_insert(nodes, init_node(-1, 1, NULL, NULL)) == 1) {
-			fprintf(stderr, "%s: Error allocating file termination node: %s\n", argv[0], files->words[j]);
-			return 3;
-		}
-
-		// Create Huffman tree
-		if ((root = make_tree(nodes)) == NULL) {
-			fprintf(stderr, "%s: Error allocating huffman tree: %s\n", argv[0], files->words[j]);
-			return 3;
-		}
-
-		// Read codes from tree
-		if ((codes = init_node_vec(DEFAULT_DATA_SIZE)) == NULL) {
-			fprintf(stderr, "%s: Error allocating codes vector: %s\n", argv[0], files->words[j]);
-			return 3;
-		}
-
-		temp_code[0] = '\0';
-		read_codes(root, codes, temp_code);
-
-		for (i = 0; i < codes->n; i++) {
-			if (codes->nodes[i]->code == NULL) {
-				fprintf(stderr, "%s: Error allocating code string: %s\n", argv[0], files->words[j]);
-				return 3;
+			// Create node queue
+			if ((return_code = build_heap_queue(queue, files->words[file_id])) != EXIT_SUCCESS) {
+				handle_error(return_code, "compressor: building queue", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return return_code;
 			}
-		}
 
-		// Read original extension
-		file_ext = strrchr(files->words[j], '.');
-		if (file_ext != NULL) {
-			file_ext++;
-			if ((file_ext - 1) - strrchr(files->words[j], '/') < 0) {
-				file_ext = NULL;
+			// Build Huffman tree
+			if ((root = make_tree(queue)) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "compressor: making huffman tree", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
 			}
+
+			// Read codes
+			if ((codes_map = init_hashmap(BYTE_SIZE)) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "compressor: initializing hashmap", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
+			}
+			if ((return_code = read_codes(root, codes_map)) != EXIT_SUCCESS) {
+				handle_error(return_code, "compressor: reading codes from huffman tree", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return return_code;
+			}
+
+			// Change file extension to .huf
+			if ((file_extension = get_file_extension(files->words[file_id])) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "compressor: saving original file extension", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
+			}
+			if ((filepath_no_extension = remove_file_extension(files->words[file_id])) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "compressor: removing old file extension", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
+			}
+			if ((filepath_with_extension = add_file_extension(filepath_no_extension, "huf")) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "compressor: changing file extension to .huf", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
+			}
+
+			// Encode file
+			if ((return_code = encode(files->words[file_id], filepath_with_extension, file_extension, root, codes_map)) != 0) {
+				handle_error(return_code, "compressor: encoding file", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return return_code;
+			}
+
+			// Free for the next file
+			free(file_extension);
+			free_tree(root);
+			free_hashmap(codes_map);
 		}
-			
-		// Count original filename length (without extension)
-		file_name_n;
-		if (file_ext != NULL)
-			file_name_n = strlen(files->words[j]) - strlen(file_ext) - 1;
-		else
-			file_name_n = strlen(files->words[j]);
-		
-		// Save filename (without extension)
-		file_name = malloc(sizeof(char) * (file_name_n + 1));
-		if (file_name == NULL){
-			fprintf(stderr, "%s: Error allocating filename string: %s\n", argv[0], files->words[j]);
-			return 3;
+		else {
+			// We're decompressing
+
+			//  Open input file
+			if ((input_file = fopen(files->words[file_id], "rb")) == NULL) {
+				handle_error(ERROR_READING_FILE, "decompressor: opening input file", files->words[file_id]);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_READING_FILE;
+			}
+
+			//  Decode file extension
+			if ((original_file_extension = read_original_extension(input_file)) == NULL) {
+				handle_error(ERROR_READING_FILE, "decompressor: reading file extension", files->words[file_id]);
+				fclose(input_file);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_READING_FILE;
+			}
+
+			// Change file extension to original
+			if ((filepath_no_extension = remove_file_extension(files->words[file_id])) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "decompressor: removing old file extension", files->words[file_id]);
+				fclose(input_file);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
+			}
+			if ((filepath_with_extension = add_file_extension(filepath_no_extension, original_file_extension)) == NULL) {
+				handle_error(ERROR_MEMORY_ALLOC, "decompressor: restoring original file extension", files->words[file_id]);
+				fclose(input_file);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_MEMORY_ALLOC;
+			}
+
+			//  Open output file
+			if ((output_file = fopen(filepath_with_extension, "wb")) == NULL) {
+				handle_error(ERROR_READING_FILE, "decompressor: opening output file", files->words[file_id]);
+				fclose(input_file);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_READING_FILE;
+			}
+
+			// Decode file
+			if ((return_code = decode(input_file, output_file)) != EXIT_SUCCESS) {
+				handle_error(return_code, "decompressor: decoding file", files->words[file_id]);
+				fclose(input_file);
+				fclose(output_file);
+				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return return_code;
+			}
+
+			// Free for the next file
+			fclose(input_file);
+			fclose(output_file);
+			free(original_file_extension);
 		}
 
-		for (i = 0; i < file_name_n; i++)
-			file_name[i] = files->words[j][i];
-		file_name[i] = '\0';
-		
-		// Create output filenames
-		out_file_name = malloc(sizeof(char) * (file_name_n + 5));
-		if (out_file_name == NULL){
-			fprintf(stderr, "%s: Error allocating output filename string: %s\n", argv[0], files->words[j]);
-			return 3;
-		}
-		
-		strcpy(out_file_name, file_name);
-		strcat(out_file_name, ".huf\0");
-				
-		// Encode file
-		in = fopen(files->words[j], "rb");
-		if (in == NULL){
-			fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
-			return 1;
-		}
-
-		out_file = fopen(out_file_name, "wb");
-		if (out_file == NULL) {
-			fprintf(stderr, "%s: No privilages to: %s\n", argv[0], files->words[j]);
-			return 2;
-		}
-
-		encode(in, out_file, file_ext, codes);
-	
-		// Show filesize before and after compression (invoke option)
 		if (show_file_size) {
-			printf("%s\n", files->words[j]);
-			printf("\tSize before: %ld [KB]\n", get_file_size(in));
-			printf("\tSize after: %ld [KB]\n", get_file_size(out_file));
+			printf("%s\n", files->words[file_id]);
+			printf("\tSize before: %ld [KB]\n", get_file_size(files->words[file_id]));
+			printf("\tSize after: %ld [KB]\n", get_file_size(filepath_with_extension));
 		}
 
-		fclose(in);
-		fclose(out_file);
-
-		// Decode file (invoke option)
-		if (decode_file) {
-			if (file_ext != NULL) {
-				out_decoded_name = malloc(sizeof(char) * (file_name_n + 10 + strlen(file_ext)));
-			}
-			else {
-				out_decoded_name = malloc(sizeof(char) * (file_name_n + 9));
-			}
-
-			if (out_decoded_name == NULL) {
-				fprintf(stderr, "%s: Error allocating decompressed output filename string: %s\n", argv[0], files->words[j]);
-				return 3;
-			}
-
-			strcpy(out_decoded_name, file_name);
-			strcat(out_decoded_name, "_decoded");
-			
-			if (file_ext != NULL) {
-				strcat(out_decoded_name, ".");
-				strcat(out_decoded_name, file_ext);
-			}
-			strcat(out_decoded_name, "\0");
-		
-			out_decoded = fopen(out_decoded_name, "wb");
-			if (out_decoded == NULL) {
-				fprintf(stderr, "%s: No privilages to: %s\n", argv[0], files->words[j]);
-				return 2;
-			}
-
-			out_file = fopen(out_file_name, "rb");
-			if (out_file == NULL) {
-				fprintf(stderr, "%s: Error reading file: %s\n", argv[0], files->words[j]);
-				return 1;
-			}
-
-			decode(out_file, out_decoded, root);
-		
-			free(out_decoded_name);
-
-			fclose(out_decoded);
-			fclose(out_file);
-		}
-
-		// Free memory for the next file
-		free(file_name);
-		free(out_file_name);
-		heap_min_free(nodes);
-		
-		for (i = 0; i < codes->n; i++) {
-			free_node(codes->nodes[i]);
-		}
-		free_node_vec(codes);
-		
-		free_tree(root);
+		free(filepath_no_extension);
+		free(filepath_with_extension);
 	}	
 	
+	// Free when job is done
 	free_word_vec(files);
+	heap_min_free(queue);
 		
-	return 0;
+	return EXIT_SUCCESS;
 }

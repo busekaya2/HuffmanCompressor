@@ -1,0 +1,13 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+
+#define BYTE_SIZE 256
+#define BITS_IN_BYTE 8
+#define PADDING_SIZE 3
+#define INITIAL_EXTENSION_LENGTH 4
+#define INITIAL_QUEUE_SIZE 64
+#define INITIAL_VECTOR_SIZE 8
+
+
+#endif
