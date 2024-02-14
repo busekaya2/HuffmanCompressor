@@ -38,21 +38,23 @@ char *read_original_extension(FILE *file) {
     return file_extension; 
 }
 
-int read_padding(int *shift, char **byte_binary, FILE *file) {
+int read_padding(int *input_shift, unsigned char *byte_binary, FILE *file) {
 	int i;
-	char padding_binary[PADDING_SIZE + 1];
+	int bit;
+	int padding = 0;
 
 	for (i = 0; i < PADDING_SIZE; i++) {
-		if ((padding_binary[i] = read_bit(shift, byte_binary, file) + '0') < 0) {
-			return padding_binary[i];
+		if ((bit = read_bit(input_shift, byte_binary, file)) < 0) {
+			return bit;
 		}
-	}
-	padding_binary[PADDING_SIZE] = '\0';
 
-	return binary_to_byte(padding_binary);
+		padding |= (bit << (PADDING_SIZE - 1 - i));
+	}
+
+	return padding;
 }
 
-node_t *read_dictionary(int *shift, char **byte_binary, FILE *file) {
+node_t *read_dictionary(int *input_shift, unsigned char *input_byte, FILE *file) {
 	int i;
 	int bit;
 	unsigned char sign;
@@ -62,17 +64,17 @@ node_t *read_dictionary(int *shift, char **byte_binary, FILE *file) {
 
 	char sign_binary[BITS_IN_BYTE + 1];
 
-	bit = read_bit(shift, byte_binary, file);
+	bit = read_bit(input_shift, input_byte, file);
 
 	if (bit == 0) { // Not a leaf
-		left_child = read_dictionary(shift, byte_binary, file);
-		right_child = read_dictionary(shift, byte_binary, file);
+		left_child = read_dictionary(input_shift, input_byte, file);
+		right_child = read_dictionary(input_shift, input_byte, file);
 
 		node = init_node(0, 0, left_child, right_child);
 	}
 	else { // Leaf
 		for (i = 0; i < BITS_IN_BYTE; i++) {
-			sign_binary[i] = read_bit(shift, byte_binary, file) + '0';
+			sign_binary[i] = read_bit(input_shift, input_byte, file) + '0';
 		}
 		sign_binary[BITS_IN_BYTE] = '\0';
 
@@ -82,9 +84,7 @@ node_t *read_dictionary(int *shift, char **byte_binary, FILE *file) {
 	return node;
 }
 
-int decode_data(int *input_shift, char **byte_binary, FILE *input_file,
-				int *output_shift, unsigned char *output_byte, FILE *output_file,
-				node_t *root, int padding) {
+int decode_data(int *input_shift, unsigned char *input_byte, FILE *input_file, FILE *output_file, node_t *root, int padding) {
 	int bit;
 	int i;
 	node_t *head;
@@ -93,7 +93,7 @@ int decode_data(int *input_shift, char **byte_binary, FILE *input_file,
 		// Case when root is the only node
 
 		while (is_next_byte_eof(input_file) == 0 || (is_next_byte_eof(input_file) == 1 && *input_shift < (BITS_IN_BYTE - padding))) {
-			if ((bit = read_bit(input_shift, byte_binary, input_file)) < 0) {
+			if ((bit = read_bit(input_shift, input_byte, input_file)) < 0) {
 				return bit;
 			}
 
@@ -105,7 +105,7 @@ int decode_data(int *input_shift, char **byte_binary, FILE *input_file,
 		head = root;
 
 		while (head->left != NULL) {
-			bit = read_bit(input_shift, byte_binary, input_file);
+			bit = read_bit(input_shift, input_byte, input_file);
 
 			switch (bit) {
 				case 0:
@@ -143,28 +143,25 @@ int decode(FILE *input_file, FILE *output_file) {
 	int padding;
 	int return_code;
 
-	char *byte_binary = NULL;
 	int input_shift = BITS_IN_BYTE; // So function will open first byte
+	unsigned char input_byte = 0;
 	
 	int output_shift = 0;
 	unsigned char output_byte = 0;
 
-	if ((padding = read_padding(&input_shift, &byte_binary, input_file)) < 0) {
+	if ((padding = read_padding(&input_shift, &input_byte, input_file)) < 0) {
 		return handle_decode_error(padding);
 	}
 
-	if ((root = read_dictionary(&input_shift, &byte_binary, input_file)) == NULL) {
-		free(byte_binary);
+	if ((root = read_dictionary(&input_shift, &input_byte, input_file)) == NULL) {
 		return ERROR_INVALID_FILE_FORMAT;
 	}
 
-	if ((return_code = decode_data(&input_shift, &byte_binary, input_file, &output_shift, &output_byte, output_file, root, padding)) != EXIT_SUCCESS) {
-		free(byte_binary);
+	if ((return_code = decode_data(&input_shift, &input_byte, input_file, output_file, root, padding)) != EXIT_SUCCESS) {
 		free_tree(root);
 		return handle_decode_error(return_code);
 	}
 
-	free(byte_binary);
 	free_tree(root);
 
 	return EXIT_SUCCESS;

@@ -6,8 +6,8 @@ debug: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./hu
 
 test: compressor.exe
 
-	../build/compressor.exe -f ../test/simple.txt -f ../test/one_unique_byte.txt -f ../test/empty.txt -f ../test/fretka_w_wannie.jpg
-	../build/compressor.exe -f ../test/simple.huf -f ../test/one_unique_byte.huf -f ../test/fretka_w_wannie.huf -d
+	../build/compressor.exe -f ../test/simple.txt -f ../test/one_unique_byte.txt -f ../test/LoremIpsum.txt -f ../test/fretka_w_wannie.jpg
+	../build/compressor.exe -f ../test/simple.huf -f ../test/one_unique_byte.huf -f ../test/LoremIpsum.huf -f ../test/fretka_w_wannie.huf -d
 
 clean:
 	rm ../build/debug.exe

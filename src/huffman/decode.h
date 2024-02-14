@@ -6,9 +6,9 @@
 #include <stdio.h>
 
 char *read_original_extension(FILE*);
-node_t *read_dictionary(int*, char**, FILE*);
-int read_padding(int*, char**, FILE *file);
-int decode_data(int*, char**, FILE*, int*, unsigned char*, FILE*, node_t*, int);
+node_t *read_dictionary(int*, unsigned char*, FILE*);
+int read_padding(int*, unsigned char*, FILE *file);
+int decode_data(int*, unsigned char*, FILE*, FILE*, node_t*, int);
 int decode(FILE*, FILE*);
 
 

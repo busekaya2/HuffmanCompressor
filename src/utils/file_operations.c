@@ -22,26 +22,23 @@ long int get_file_size(const char *filepath) {
 }
 
 // Read one bit from file
-int read_bit(int *shift, char **byte_binary, FILE *file) {
-	int byte;
+int read_bit(int *shift, unsigned char *byte, FILE *file) {
+	int input_byte;
+    int bit;
 
 	if (*shift >= 8) {
 		*shift = 0;
 
-		if ((byte = getc(file)) == EOF) {
+		if ((input_byte = getc(file)) == EOF) {
 			return -1; // EOF
 		}
-		
-		if (*byte_binary != NULL) {
-			free(*byte_binary);
-		}
-
-		if ((*byte_binary = byte_to_binary(byte)) == NULL) {
-			return -2; // Memory alloc error
-		}
+        *byte = input_byte;
 	}
 
-	return (*byte_binary)[(*shift)++] - '0';
+    bit = (*byte & (1 << (BITS_IN_BYTE - 1 - *shift))) != 0 ? 1 : 0;
+    (*shift)++;
+    
+    return bit;
 }
 
 // Write one bit to file
