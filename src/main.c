@@ -19,8 +19,8 @@ void help() {
 	printf("During compression/decompression, a new file is created, containing the compressed data and dictionary.\n\n");
 	printf("Syntax: ./compressor.exe [-f FILEPATH] [-d] [-s] [-h]\n\n");
 	printf("Options:\n");
-	printf("\t-d\tSwitch to decopression (Program compresses by default)\n");
 	printf("\t-f\tPath of the file to be compressed/decompressed\n");
+	printf("\t-d\tSwitch to decopression (Program compresses by default)\n");
 	printf("\t-s\tDisplay file size before and after compression/decompression\n");
 	printf("\t-h\tDisplay help message\n\n");
 	printf("The program can compress/decompress several files at once. In this case, the -f option should be placed before the path of each file.\n");
