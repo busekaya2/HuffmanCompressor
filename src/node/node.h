@@ -2,11 +2,11 @@
 #define NODE_H
 
 
-typedef struct Node{
+typedef struct node {
 	unsigned char sign;
 	unsigned int freq;
-	struct Node *left;
-	struct Node *right;
+	struct node *left;
+	struct node *right;
 } node_t;
 
 node_t *init_node(unsigned char, unsigned int, node_t*, node_t*);

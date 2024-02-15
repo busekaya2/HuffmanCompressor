@@ -8,6 +8,7 @@
 #define INITIAL_EXTENSION_LENGTH 4
 #define INITIAL_QUEUE_SIZE 64
 #define INITIAL_VECTOR_SIZE 8
+#define MAX_CODE_LENGTH sizeof(int) * BITS_IN_BYTE
 
 
 #endif

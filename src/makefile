@@ -1,8 +1,8 @@
-compressor.exe: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c
-	gcc main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c -o ../build/compressor.exe
+compressor.exe: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c
+	gcc main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c -o ../build/compressor.exe
 
-debug: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c
-	gcc -ggdb main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./map/hashmap.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c -o ../build/debug.exe
+debug: main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c
+	gcc -ggdb main.c ./node/node.c ./vector/word_vector.c ./huffman/huffman_tree.c ./huffman/read_codes.c ./huffman/encode.c ./huffman/decode.c ./heap/heap_min.c ./utils/bit_operations.c ./utils/file_operations.c ./utils/path_handler.c -o ../build/debug.exe
 
 test: compressor.exe
 

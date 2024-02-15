@@ -3,60 +3,47 @@
 #include "../constants.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 
-int read_codes(node_t *root, hashmap_t *map) {
-	char temp_code[BYTE_SIZE];
-	char *tmp;
+int read_codes(node_t *root, huffman_code_t (*codes)[BYTE_SIZE]) {
+	if (root == NULL) {
+		return ERROR_MEMORY_ALLOC;
+	}
 
-	temp_code[0] = '\0';
+	huffman_code_t temp_code;
+	temp_code.code = 0;
+	temp_code.length = 0;
 
 	if (root->left == NULL) {
 		// Case when root is the only leaf
 
-		strcat(temp_code, "0");
-		if ((tmp = malloc(sizeof(char) * (strlen(temp_code) + 1))) == NULL) {
-			return ERROR_MEMORY_ALLOC;
-		}
+		add_bit(&((*codes)[root->sign]), 0);
 
-		strcpy(tmp, temp_code);
-		hashmap_insert(map, root->sign, tmp);
 		return EXIT_SUCCESS;
 	}
 
-	read_codes_recursive(root, temp_code, map);
+	read_codes_recursive(root, &temp_code, codes);
 
 	return EXIT_SUCCESS;
 }
 
-
-void read_codes_recursive(node_t *head, char *temp_code, hashmap_t *map) {
-	char *tmp;
-
-	if (head == NULL) {
-		return;
-	}
-
+void read_codes_recursive(node_t *head, huffman_code_t *temp_code, huffman_code_t (*codes)[BYTE_SIZE]) {
 	if (head->left != NULL) {
 		// This node is not a leaf, go deeper
 
-		read_codes_recursive(head->left, strcat(temp_code, "0"), map);
-		read_codes_recursive(head->right, strcat(temp_code, "1"), map);
+		add_bit(temp_code, 0);
+		read_codes_recursive(head->left, temp_code, codes);
+
+		add_bit(temp_code, 1);
+		read_codes_recursive(head->right, temp_code, codes);
 	}
 	else {
 		// This node is a leaf, let's save its code
-
-		if ((tmp = malloc(sizeof(char) * (strlen(temp_code) + 1))) == NULL) {
-			return;
-		}
-
-		strcpy(tmp, temp_code);
-		hashmap_insert(map, head->sign, tmp);
+		
+		(*codes)[head->sign].code = temp_code->code;
+		(*codes)[head->sign].length = temp_code->length;
 	}
 
 	// Remove last code's bit when returning to previous node
-	if (strlen(temp_code) > 0) {
-		temp_code[strlen(temp_code) - 1] = '\0';
-    }
+	clear_bit(temp_code);
 }

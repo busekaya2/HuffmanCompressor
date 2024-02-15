@@ -62,10 +62,9 @@ void handle_error(int return_code, char *message, char *info) {
 	}
 }
 
-void free_resources(heap_min_t *queue, word_vec_t *files, hashmap_t *codes_map, node_t *root, char *file_extension, char *filepath_no_extension, char *filepath_with_extension) {
+void free_resources(heap_min_t *queue, word_vec_t *files, node_t *root, char *file_extension, char *filepath_no_extension, char *filepath_with_extension) {
     heap_min_free(queue);
     free_word_vec(files);
-    free_hashmap(codes_map);
     free_tree(root);
     free(file_extension);
     free(filepath_no_extension);
@@ -89,7 +88,7 @@ int main(int argc, char **argv) {
 	// Compression
 	heap_min_t *queue = NULL;						
 	node_t *root = NULL;							
-	hashmap_t *codes_map = NULL;
+	huffman_code_t codes[BYTE_SIZE];
 	char *file_extension = NULL;				
 
 	// Decompression
@@ -99,7 +98,7 @@ int main(int argc, char **argv) {
 	
 	if ((files = init_word_vec(INITIAL_VECTOR_SIZE)) == NULL) {
 		handle_error(ERROR_MEMORY_ALLOC, "creating filename vector", NULL);
-		free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+		free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 		return ERROR_MEMORY_ALLOC;
 	}
 
@@ -110,7 +109,7 @@ int main(int argc, char **argv) {
 				// Add path of file to vector 
 				if (add_word(files, optarg) == 1) {
 					handle_error(ERROR_MEMORY_ALLOC, "adding filename to vector", NULL);
-					free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+					free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 					return ERROR_MEMORY_ALLOC;
 				}
 			break;
@@ -126,14 +125,14 @@ int main(int argc, char **argv) {
 			break;
 
 			case 'h':
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				help();
 			return EXIT_SUCCESS;
 
 			case '?':
 				handle_error(ERROR_INVALID_PARAMETERS, "Unknown parameter", optarg);
 				help();
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 			return ERROR_INVALID_PARAMETERS;
 		}
 	}
@@ -141,13 +140,13 @@ int main(int argc, char **argv) {
 	if (files->n < 1) {
 		handle_error(ERROR_INVALID_PARAMETERS, "no file was given", NULL);
 		help();
-		free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+		free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 		return ERROR_INVALID_PARAMETERS;
 	}
 
 	if ((queue = init_heap_min(INITIAL_QUEUE_SIZE)) == NULL) {
 		handle_error(ERROR_MEMORY_ALLOC, "initializing queue", NULL);
-		free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+		free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 		return ERROR_MEMORY_ALLOC;
 	}
 
@@ -164,57 +163,60 @@ int main(int argc, char **argv) {
 			// Create node queue
 			if ((return_code = build_heap_queue(queue, files->words[file_id])) != EXIT_SUCCESS) {
 				handle_error(return_code, "compressor: building queue", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return return_code;
 			}
 
 			// Build Huffman tree
 			if ((root = make_tree(queue)) == NULL) {
 				handle_error(ERROR_MEMORY_ALLOC, "compressor: making huffman tree", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_MEMORY_ALLOC;
+			}
+			if (get_tree_height(root) > MAX_CODE_LENGTH) {
+				handle_error(ERROR_INVALID_FILE_FORMAT, "compressor: huffman code too long", files->words[file_id]);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_INVALID_FILE_FORMAT;
 			}
 
 			// Read codes
-			if ((codes_map = init_hashmap(BYTE_SIZE)) == NULL) {
-				handle_error(ERROR_MEMORY_ALLOC, "compressor: initializing hashmap", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
-				return ERROR_MEMORY_ALLOC;
+			for (i = 0; i < BYTE_SIZE; i++) {
+				codes[i].code = 0;
+				codes[i].length = 0;
 			}
-			if ((return_code = read_codes(root, codes_map)) != EXIT_SUCCESS) {
+			if ((return_code = read_codes(root, &codes)) != EXIT_SUCCESS) {
 				handle_error(return_code, "compressor: reading codes from huffman tree", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return return_code;
 			}
 
 			// Change file extension to .huf
 			if ((file_extension = get_file_extension(files->words[file_id])) == NULL) {
 				handle_error(ERROR_MEMORY_ALLOC, "compressor: saving original file extension", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_MEMORY_ALLOC;
 			}
 			if ((filepath_no_extension = remove_file_extension(files->words[file_id])) == NULL) {
 				handle_error(ERROR_MEMORY_ALLOC, "compressor: removing old file extension", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_MEMORY_ALLOC;
 			}
 			if ((filepath_with_extension = add_file_extension(filepath_no_extension, "huf")) == NULL) {
 				handle_error(ERROR_MEMORY_ALLOC, "compressor: changing file extension to .huf", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_MEMORY_ALLOC;
 			}
 
 			// Encode file
-			if ((return_code = encode(files->words[file_id], filepath_with_extension, file_extension, root, codes_map)) != 0) {
+			if ((return_code = encode(files->words[file_id], filepath_with_extension, file_extension, root, &codes)) != 0) {
 				handle_error(return_code, "compressor: encoding file", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return return_code;
 			}
 
 			// Free for the next file
 			free(file_extension);
 			free_tree(root);
-			free_hashmap(codes_map);
 		}
 		else {
 			// We're decompressing
@@ -222,7 +224,7 @@ int main(int argc, char **argv) {
 			//  Open input file
 			if ((input_file = fopen(files->words[file_id], "rb")) == NULL) {
 				handle_error(ERROR_READING_FILE, "decompressor: opening input file", files->words[file_id]);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_READING_FILE;
 			}
 
@@ -230,7 +232,7 @@ int main(int argc, char **argv) {
 			if ((original_file_extension = read_original_extension(input_file)) == NULL) {
 				handle_error(ERROR_READING_FILE, "decompressor: reading file extension", files->words[file_id]);
 				fclose(input_file);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_READING_FILE;
 			}
 
@@ -238,22 +240,22 @@ int main(int argc, char **argv) {
 			if ((filepath_no_extension = remove_file_extension(files->words[file_id])) == NULL) {
 				handle_error(ERROR_MEMORY_ALLOC, "decompressor: removing old file extension", files->words[file_id]);
 				fclose(input_file);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_MEMORY_ALLOC;
 			}
 			if ((filepath_with_extension = add_file_extension(filepath_no_extension, original_file_extension)) == NULL) {
 				handle_error(ERROR_MEMORY_ALLOC, "decompressor: restoring original file extension", files->words[file_id]);
 				fclose(input_file);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return ERROR_MEMORY_ALLOC;
 			}
 
 			//  Open output file
 			if ((output_file = fopen(filepath_with_extension, "wb")) == NULL) {
-				handle_error(ERROR_READING_FILE, "decompressor: opening output file", files->words[file_id]);
+				handle_error(ERROR_WRITING_FILE, "decompressor: opening output file", files->words[file_id]);
 				fclose(input_file);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
-				return ERROR_READING_FILE;
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
+				return ERROR_WRITING_FILE;
 			}
 
 			// Decode file
@@ -261,7 +263,7 @@ int main(int argc, char **argv) {
 				handle_error(return_code, "decompressor: decoding file", files->words[file_id]);
 				fclose(input_file);
 				fclose(output_file);
-				free_resources(queue, files, codes_map, root, file_extension, filepath_no_extension, filepath_with_extension);
+				free_resources(queue, files, root, file_extension, filepath_no_extension, filepath_with_extension);
 				return return_code;
 			}
 

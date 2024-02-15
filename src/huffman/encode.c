@@ -2,16 +2,14 @@
 #include "../utils/bit_operations.h"
 #include "../utils/file_operations.h"
 #include "../error_codes.h"
-#include "..//constants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
-int encode(char *input_filename, char *output_filename, char* file_ext, node_t *root, hashmap_t *codes_map) {
+int encode(char *input_filename, char *output_filename, char* file_ext, node_t *root, huffman_code_t (*codes)[BYTE_SIZE]) {
 	unsigned char byte = 0;
 	int shift = 0;
-	char *code;	
 	int i, padding;
 	FILE *input_file;
 	FILE *output_file;
@@ -39,7 +37,7 @@ int encode(char *input_filename, char *output_filename, char* file_ext, node_t *
 	}
 
 	encode_dictionary(&shift, &byte, output_file, root);
-	encode_data(&shift, &byte, input_file, output_file, codes_map);
+	encode_data(&shift, &byte, input_file, output_file, codes);
 
 	// Fill last byte with zeros and re-open file
 	padding = BITS_IN_BYTE - shift;
@@ -83,16 +81,13 @@ void encode_dictionary(int *shift, unsigned char *byte, FILE *file, node_t *head
 	}
 }
 
-void encode_data(int *shift, unsigned char *byte, FILE *input_file, FILE *output_file, hashmap_t *codes_map) {
-	int i;
+void encode_data(int *shift, unsigned char *byte, FILE *input_file, FILE *output_file, huffman_code_t (*codes)[BYTE_SIZE]) {
 	int input_byte;
-	char *code;
+	int i;
 
 	while ((input_byte = getc(input_file)) != EOF) {
-		code = hashmap_get(codes_map, input_byte);
-
-		for (i = 0; i < strlen(code); i++) {
-			write_bit(code[i] - '0', shift, byte, output_file);
+		for (i = 0; i < (*codes)[input_byte].length; i++) {
+			write_bit(get_bit_at(&((*codes)[input_byte]), i), shift, byte, output_file);
 		}
 	}
 }

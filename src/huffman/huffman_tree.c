@@ -64,6 +64,17 @@ node_t *make_tree(heap_min_t *heap_min) {
 	return heap_min_remove(heap_min);
 }
 
+int get_tree_height(node_t *root) {
+    if (root == NULL) {
+        return 0;
+    }
+
+    int left_height = get_tree_height(root->left);
+    int right_height = get_tree_height(root->right);
+
+    return ((left_height > right_height) ? left_height : right_height) + 1;
+}
+
 void free_tree(node_t *root) {
 	if (root == NULL) {
 		return;
@@ -72,4 +83,30 @@ void free_tree(node_t *root) {
 	free_tree(root->left);		
 	free_tree(root->right);
 	free_node(root);
+}
+
+void add_bit(huffman_code_t *huffman_code, unsigned int bit) {
+	if (huffman_code == NULL || bit > 1 || huffman_code->length >= MAX_CODE_LENGTH) {
+		return;
+	}
+
+	huffman_code->code |= bit << huffman_code->length;
+	huffman_code->length++;
+}
+
+void clear_bit(huffman_code_t *huffman_code) {
+	if (huffman_code == NULL || huffman_code->length < 1) {
+		return;
+	}
+
+	huffman_code->length--;
+	huffman_code->code &= ~(1 << huffman_code->length);
+}
+
+int get_bit_at(huffman_code_t *huffman_code, int shift) {
+	if (huffman_code == NULL || shift < 0 || shift + 1 > huffman_code->length) {
+		return -1;
+	}
+
+	return (huffman_code->code & (1 << shift)) != 0 ? 1 : 0;
 }
